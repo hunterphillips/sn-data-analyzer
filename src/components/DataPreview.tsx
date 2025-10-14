@@ -1,22 +1,23 @@
 import React from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface DataPreviewProps {
   data: Record<string, any>[];
   tableName: string;
-  onAnalyze: () => void;
-  isAnalyzing?: boolean;
+  isExpanded: boolean;
+  onToggle: () => void;
 }
 
 export function DataPreview({
   data,
   tableName,
-  onAnalyze,
-  isAnalyzing = false,
+  isExpanded,
+  onToggle,
 }: DataPreviewProps) {
   if (!data || data.length === 0) {
     return (
       <div className="data-preview-empty">
-        <p>No data to preview. Click "Get Data" above to pull records.</p>
+        <p>No data to preview. Click "Preview Data" above to pull records.</p>
       </div>
     );
   }
@@ -36,49 +37,57 @@ export function DataPreview({
         <div className="data-preview-info">
           <h3>Data Preview</h3>
           <p>
-            <strong>{data.length}</strong> records from <strong>{tableName}</strong>
+            <strong>{data.length}</strong> records from{' '}
+            <strong>{tableName}</strong>
             {hasMore && ' (showing first 50)'}
           </p>
         </div>
-        <button
-          onClick={onAnalyze}
-          disabled={isAnalyzing}
-          className="analyze-btn"
-        >
-          {isAnalyzing ? 'Analyzing...' : 'Analyze with AI'}
+        <button onClick={onToggle} className="toggle-preview-btn">
+          {isExpanded ? (
+            <>
+              <ChevronUp size={16} />
+              Hide Preview
+            </>
+          ) : (
+            <>
+              <ChevronDown size={16} />
+              Show Preview
+            </>
+          )}
         </button>
       </div>
 
-      <div className="data-preview-table-container">
-        <table className="data-preview-table">
-          <thead>
-            <tr>
-              <th className="row-number">#</th>
-              {fields.map((field) => (
-                <th key={field}>{field}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {previewData.map((record, index) => (
-              <tr key={index}>
-                <td className="row-number">{index + 1}</td>
-                {fields.map((field) => (
-                  <td key={field}>
-                    {formatCellValue(record[field])}
-                  </td>
+      {isExpanded && (
+        <>
+          <div className="data-preview-table-container">
+            <table className="data-preview-table">
+              <thead>
+                <tr>
+                  <th className="row-number">#</th>
+                  {fields.map((field) => (
+                    <th key={field}>{field}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {previewData.map((record, index) => (
+                  <tr key={index}>
+                    <td className="row-number">{index + 1}</td>
+                    {fields.map((field) => (
+                      <td key={field}>{formatCellValue(record[field])}</td>
+                    ))}
+                  </tr>
                 ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              </tbody>
+            </table>
+          </div>
 
-      {hasMore && (
-        <div className="data-preview-footer">
-          Showing {previewData.length} of {data.length} records. All records will
-          be included in the analysis.
-        </div>
+          {hasMore && (
+            <div className="data-preview-footer">
+              Showing {previewData.length} of {data.length} records.
+            </div>
+          )}
+        </>
       )}
     </div>
   );

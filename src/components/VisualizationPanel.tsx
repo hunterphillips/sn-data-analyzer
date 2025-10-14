@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChartLine } from 'lucide-react';
+import { ChartLine, Loader2 } from 'lucide-react';
 import { DataPreview } from './DataPreview';
 import { ChartRenderer } from './ChartRenderer';
 import type { DataSource, QueryConfig } from '../types/servicenow';
@@ -26,7 +26,8 @@ interface VisualizationPanelProps {
   onRetryTranslation: () => void;
   onRefineClarification: () => void;
   onUseDefaultClarification: () => void;
-  onAnalyze: () => void;
+  isDataPreviewExpanded: boolean;
+  onToggleDataPreview: () => void;
 }
 
 export function VisualizationPanel({
@@ -48,7 +49,8 @@ export function VisualizationPanel({
   onRetryTranslation,
   onRefineClarification,
   onUseDefaultClarification,
-  onAnalyze,
+  isDataPreviewExpanded,
+  onToggleDataPreview,
 }: VisualizationPanelProps) {
   const hasCharts = messages.some((m) => m.chartData);
   const hasData = queryResults && queryResults.data.length > 0;
@@ -67,8 +69,8 @@ export function VisualizationPanel({
             <DataPreview
               data={queryResults.data}
               tableName={queryResults.tableName}
-              onAnalyze={onAnalyze}
-              isAnalyzing={isAnalyzing}
+              isExpanded={isDataPreviewExpanded}
+              onToggle={onToggleDataPreview}
             />
           )}
 
@@ -85,17 +87,36 @@ export function VisualizationPanel({
               )}
             </div>
           )}
+
+          {/* Show loading indicator below charts when analyzing */}
+          {isAnalyzing && (
+            <div className="analysis-loading">
+              <Loader2 className="loading-spinner" size={24} />
+              <p>Analyzing data...</p>
+            </div>
+          )}
         </>
       ) : (
-        <div className="visualization-empty">
-          <ChartLine size={48} className="empty-icon" />
-          <h2>Analysis & Visualizations</h2>
-          <p>
-            {dataSource === 'query'
-              ? 'Pull data using the form on the left to get started'
-              : 'Upload a file and ask questions to see visualizations'}
-          </p>
-        </div>
+        <>
+          {/* Show loading indicator in center if analyzing with no content */}
+          {isAnalyzing ? (
+            <div className="visualization-loading-center">
+              <Loader2 className="loading-spinner" size={48} />
+              <h2>Analyzing data...</h2>
+              <p>Creating visualizations for your query</p>
+            </div>
+          ) : (
+            <div className="visualization-empty">
+              <ChartLine size={48} className="empty-icon" />
+              <h2>Analysis & Visualizations</h2>
+              <p>
+                {dataSource === 'query'
+                  ? 'Pull data using the form on the left to get started'
+                  : 'Upload a file and ask questions to see visualizations'}
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

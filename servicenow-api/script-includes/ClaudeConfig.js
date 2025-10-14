@@ -185,7 +185,6 @@ ClaudeConfig.prototype = {
       '  "table": "incident",\n' +
       '  "tableLabel": "Incident",\n' +
       '  "encodedQuery": "priority=1^active=true",\n' +
-      '  "fields": ["number", "short_description", "priority", "state", "assigned_to", "opened_at"],\n' +
       '  "limit": 100,\n' +
       '  "displayValue": "true",\n' +
       '  "summary": "Searching Incidents where priority is Critical (1) and active is true"\n' +
@@ -196,7 +195,6 @@ ClaudeConfig.prototype = {
       '  "table": "change_request",\n' +
       '  "tableLabel": "Change Request",\n' +
       '  "encodedQuery": "state=-5^ORstate=-4^risk=1",\n' +
-      '  "fields": ["number", "short_description", "state", "risk", "priority", "start_date"],\n' +
       '  "limit": 100,\n' +
       '  "displayValue": "true",\n' +
       '  "summary": "Searching Change Requests where state is New (-5) or Assess (-4) and risk is High (1)"\n' +
@@ -207,7 +205,6 @@ ClaudeConfig.prototype = {
       '  "table": "problem",\n' +
       '  "tableLabel": "Problem",\n' +
       '  "encodedQuery": "assignment_group=^sys_created_on>=javascript:gs.daysAgoStart(7)",\n' +
-      '  "fields": ["number", "short_description", "priority", "state", "sys_created_on"],\n' +
       '  "limit": 100,\n' +
       '  "displayValue": "true",\n' +
       '  "summary": "Searching Problems where assignment group is empty and created within the last 7 days"\n' +
@@ -217,9 +214,9 @@ ClaudeConfig.prototype = {
       '2. Determine the most appropriate table (use table hint if provided, but can override if user is explicit)\n' +
       '3. Identify the fields/conditions mentioned\n' +
       '4. Build the encoded query using proper ServiceNow syntax\n' +
-      '5. Select relevant fields to return (include key identifying fields + fields mentioned in query)\n' +
-      '6. Create a human-readable summary of what the query will search for\n' +
-      '7. Return ONLY valid JSON\n\n' +
+      '5. Create a human-readable summary of what the query will search for\n' +
+      '6. Return ONLY valid JSON\n\n' +
+      'NOTE: All table fields are always returned by default. Do not specify a fields list.\n\n' +
       '## Making Assumptions vs Asking for Clarification\n\n' +
       'PREFER making reasonable assumptions. Only ask for clarification when truly ambiguous.\n\n' +
       'Good assumptions to make:\n' +
@@ -237,7 +234,6 @@ ClaudeConfig.prototype = {
       '  "table": "table_name",\n' +
       '  "tableLabel": "Human Readable Table Name",\n' +
       '  "encodedQuery": "field1=value1^field2=value2",\n' +
-      '  "fields": ["number", "short_description", "priority", "state", "sys_created_on"],\n' +
       '  "limit": 100,\n' +
       '  "displayValue": "true",\n' +
       '  "summary": "Human readable description of what this query searches for"\n' +
@@ -247,8 +243,7 @@ ClaudeConfig.prototype = {
       '- Use actual field names from the schema (not labels)\n' +
       '- Use actual choice values (numbers) not labels\n' +
       '- If encodedQuery is empty string, it means "get all records"\n' +
-      '- Always include key identifier fields like "number" and "short_description"\n' +
-      '- Always include sys_created_on for time-based queries\n' +
+      '- All fields are returned automatically - do not include a fields property\n' +
       '- Limit should typically be 100 unless user specifies otherwise\n' +
       '- DisplayValue should be "true" for human-readable results'
     );

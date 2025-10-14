@@ -25,6 +25,8 @@ function App() {
     tableName: string;
   } | null>(null);
   const [isQueryLoading, setIsQueryLoading] = useState(false);
+  const [isDataPreviewExpanded, setIsDataPreviewExpanded] = useState(true);
+  const [reportQuestion, setReportQuestion] = useState('');
 
   // Query translation state
   const [queryMode, setQueryMode] = useState<QueryMode>('simple');
@@ -84,6 +86,18 @@ function App() {
         setClarificationResult(result);
       } else {
         setTranslationResult(result);
+
+        // Automatically execute the query after successful translation
+        const config: QueryConfig = {
+          table: result.table,
+          query: result.encodedQuery,
+          limit: result.limit,
+          offset: 0,
+          displayValue: result.displayValue || 'true',
+        };
+
+        // Execute the query (don't await to avoid blocking)
+        handleExecuteQuery(config);
       }
     } catch (error: any) {
       console.error('Translation error:', error);
@@ -119,6 +133,15 @@ function App() {
         data: records,
         tableName: config.table,
       });
+
+      // Auto-submit report question if it exists
+      if (reportQuestion.trim()) {
+        // Wait a bit for queryResults state to update
+        setTimeout(() => {
+          handleAnalyzeQueryResults(reportQuestion);
+          setReportQuestion(''); // Clear the question after submitting
+        }, 100);
+      }
     } catch (error) {
       console.error('Query execution error:', error);
       alert('Failed to execute query. Check console for details.');
@@ -134,7 +157,6 @@ function App() {
     const config: QueryConfig = {
       table: translationResult.table,
       query: translationResult.encodedQuery,
-      fields: translationResult.fields.join(','),
       limit: translationResult.limit,
       offset: 0,
       displayValue: translationResult.displayValue || 'true',
@@ -167,20 +189,30 @@ function App() {
     // Optionally trigger a retry with modified query
   };
 
-  const handleAnalyzeQueryResults = async () => {
-    if (!queryResults || !input.trim()) {
-      alert('Please enter a question about the data');
+  const handleToggleDataPreview = () => {
+    setIsDataPreviewExpanded((prev) => !prev);
+  };
+
+  const handleAnalyzeQueryResults = async (question?: string) => {
+    const questionText = question || input;
+
+    if (!queryResults || !questionText.trim()) {
+      if (!question) {
+        alert('Please enter a question about the data');
+      }
       return;
     }
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: input,
+      content: questionText,
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput('');
+    if (!question) {
+      setInput('');
+    }
     setIsLoading(true);
 
     try {
@@ -203,6 +235,11 @@ function App() {
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+
+      // Auto-collapse data preview when a chart is generated
+      if (result.chartData) {
+        setIsDataPreviewExpanded(false);
+      }
     } catch (error) {
       console.error('Error:', error);
       const errorMessage: Message = {
@@ -254,6 +291,11 @@ function App() {
 
       setMessages((prev) => [...prev, assistantMessage]);
       setCurrentUpload(null);
+
+      // Auto-collapse data preview when a chart is generated (if in query mode)
+      if (result.chartData && dataSource === 'query') {
+        setIsDataPreviewExpanded(false);
+      }
     } catch (error) {
       console.error('Error:', error);
       const errorMessage: Message = {
@@ -302,6 +344,8 @@ function App() {
         onRetryTranslation={handleRetryTranslation}
         onRefineClarification={handleRefineClarification}
         onUseDefaultClarification={handleUseDefaultClarification}
+        reportQuestion={reportQuestion}
+        onReportQuestionChange={setReportQuestion}
       />
       <VisualizationPanel
         dataSource={dataSource}
@@ -322,7 +366,8 @@ function App() {
         onRetryTranslation={handleRetryTranslation}
         onRefineClarification={handleRefineClarification}
         onUseDefaultClarification={handleUseDefaultClarification}
-        onAnalyze={handleAnalyzeQueryResults}
+        isDataPreviewExpanded={isDataPreviewExpanded}
+        onToggleDataPreview={handleToggleDataPreview}
       />
     </div>
   );

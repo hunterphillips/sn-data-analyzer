@@ -2,7 +2,10 @@ import React from 'react';
 import { Send, Paperclip, ChartLine, Database, Upload } from 'lucide-react';
 import type { DataSource, QueryConfig } from '../types/servicenow';
 import type { FileUpload } from '../services/serviceNowApi';
-import { ServiceNowQueryBuilder, type QueryMode } from './ServiceNowQueryBuilder';
+import {
+  ServiceNowQueryBuilder,
+  type QueryMode,
+} from './ServiceNowQueryBuilder';
 import {
   QueryTranslationPreview,
   QueryTranslationError,
@@ -48,6 +51,8 @@ interface ChatPanelProps {
   onRetryTranslation: () => void;
   onRefineClarification: () => void;
   onUseDefaultClarification: () => void;
+  reportQuestion: string;
+  onReportQuestionChange: (question: string) => void;
 }
 
 export function ChatPanel({
@@ -78,6 +83,8 @@ export function ChatPanel({
   onRetryTranslation,
   onRefineClarification,
   onUseDefaultClarification,
+  reportQuestion,
+  onReportQuestionChange,
 }: ChatPanelProps) {
   return (
     <div className="chat-panel">
@@ -107,44 +114,76 @@ export function ChatPanel({
       </div>
 
       {dataSource === 'query' ? (
-        /* Query Mode - Show Query Builder */
-        <div className="query-builder-section">
-          <ServiceNowQueryBuilder
-            onExecuteQuery={onExecuteQuery}
-            onNaturalLanguageQuery={onNaturalLanguageQuery}
-            isLoading={isQueryLoading || isTranslating}
-            mode={queryMode}
-            onModeChange={onModeChange}
-          />
-
-          {/* Show translation preview if in simple mode and translation succeeded */}
-          {queryMode === 'simple' && translationResult && (
-            <QueryTranslationPreview
-              translation={translationResult}
-              onConfirm={onConfirmTranslation}
-              onEdit={onEditTranslation}
-              isLoading={isQueryLoading}
+        /* Query Mode - Show Query Builder + Chat Input */
+        <>
+          <div className="query-builder-section">
+            <ServiceNowQueryBuilder
+              onExecuteQuery={onExecuteQuery}
+              onNaturalLanguageQuery={onNaturalLanguageQuery}
+              isLoading={isQueryLoading || isTranslating}
+              mode={queryMode}
+              onModeChange={onModeChange}
+              translationResult={translationResult}
+              reportQuestion={reportQuestion}
+              onReportQuestionChange={onReportQuestionChange}
             />
-          )}
 
-          {/* Show clarification request if translation needs more info */}
-          {queryMode === 'simple' && clarificationResult && (
-            <QueryClarificationRequest
-              clarification={clarificationResult}
-              onRefine={onRefineClarification}
-              onUseDefault={clarificationResult.suggestion ? onUseDefaultClarification : undefined}
-            />
-          )}
+            {/* Show translation preview if in simple mode and translation succeeded */}
+            {queryMode === 'simple' && translationResult && (
+              <QueryTranslationPreview
+                translation={translationResult}
+                onConfirm={onConfirmTranslation}
+                onEdit={onEditTranslation}
+                isLoading={isQueryLoading}
+              />
+            )}
 
-          {/* Show translation error if translation failed */}
-          {queryMode === 'simple' && translationError && (
-            <QueryTranslationError
-              error={translationError}
-              onRetry={onRetryTranslation}
-              onSwitchToAdvanced={() => onModeChange('advanced')}
-            />
-          )}
-        </div>
+            {/* Show clarification request if translation needs more info */}
+            {queryMode === 'simple' && clarificationResult && (
+              <QueryClarificationRequest
+                clarification={clarificationResult}
+                onRefine={onRefineClarification}
+                onUseDefault={
+                  clarificationResult.suggestion
+                    ? onUseDefaultClarification
+                    : undefined
+                }
+              />
+            )}
+
+            {/* Show translation error if translation failed */}
+            {queryMode === 'simple' && translationError && (
+              <QueryTranslationError
+                error={translationError}
+                onRetry={onRetryTranslation}
+                onSwitchToAdvanced={() => onModeChange('advanced')}
+              />
+            )}
+          </div>
+
+          {/* Chat Input for Query Mode */}
+          <form onSubmit={onSubmit} className="input-form">
+            <div className="input-row">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => onInputChange(e.target.value)}
+                placeholder={
+                  hasQueryResults
+                    ? 'Ask about this data...'
+                    : 'Get data above to analyze...'
+                }
+                disabled={!hasQueryResults || isLoading}
+              />
+              <button
+                type="submit"
+                disabled={!hasQueryResults || isLoading || !input.trim()}
+              >
+                <Send size={20} />
+              </button>
+            </div>
+          </form>
+        </>
       ) : (
         /* File Mode - Show Chat Interface */
         <>
@@ -152,7 +191,8 @@ export function ChatPanel({
             {messages.length === 0 ? (
               <div className="welcome">
                 <p>
-                  Upload your exported data file (CSV, JSON, PDF) and ask questions to generate insights and visualizations.
+                  Upload your exported data file (CSV, JSON, PDF) and ask
+                  questions to generate insights and visualizations.
                 </p>
               </div>
             ) : (
@@ -175,6 +215,7 @@ export function ChatPanel({
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Chat Input for File Mode */}
           <form onSubmit={onSubmit} className="input-form">
             {currentUpload && (
               <div className="file-preview">

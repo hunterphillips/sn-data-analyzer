@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { QueryConfig, ServiceNowTable } from '../types/servicenow';
+import type { QueryTranslation } from './QueryTranslationPreview';
 
 export type QueryMode = 'simple' | 'advanced';
 
@@ -9,6 +10,9 @@ interface ServiceNowQueryBuilderProps {
   isLoading?: boolean;
   mode: QueryMode;
   onModeChange: (mode: QueryMode) => void;
+  translationResult: QueryTranslation | null;
+  reportQuestion: string;
+  onReportQuestionChange: (question: string) => void;
 }
 
 const COMMON_TABLES = [
@@ -19,8 +23,8 @@ const COMMON_TABLES = [
   { value: 'cmdb_ci', label: 'Configuration Item' },
   { value: 'cmdb_ci_server', label: 'Server' },
   { value: 'cmdb_ci_computer', label: 'Computer' },
-  { value: 'sys_user', label: 'User' },
-  { value: 'sys_user_group', label: 'User Group' },
+  // { value: 'sys_user', label: 'User' },
+  // { value: 'sys_user_group', label: 'User Group' },
 ];
 
 export function ServiceNowQueryBuilder({
@@ -29,18 +33,32 @@ export function ServiceNowQueryBuilder({
   isLoading = false,
   mode,
   onModeChange,
+  translationResult,
+  reportQuestion,
+  onReportQuestionChange,
 }: ServiceNowQueryBuilderProps) {
   const [config, setConfig] = useState<QueryConfig>({
     table: 'incident',
     query: '',
-    fields: '',
     limit: 100,
     offset: 0,
     displayValue: 'true',
   });
 
   const [naturalLanguageQuery, setNaturalLanguageQuery] = useState('');
-  const [selectedTable, setSelectedTable] = useState<string>('incident');
+
+  // Auto-fill Advanced mode form when switching from Simple mode with a translation
+  useEffect(() => {
+    if (mode === 'advanced' && translationResult) {
+      setConfig({
+        table: translationResult.table,
+        query: translationResult.encodedQuery,
+        limit: translationResult.limit,
+        offset: 0,
+        displayValue: 'true', // Always use display values (human-readable)
+      });
+    }
+  }, [mode, translationResult]);
 
   const handleAdvancedSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +68,7 @@ export function ServiceNowQueryBuilder({
   const handleSimpleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!naturalLanguageQuery.trim()) return;
-    onNaturalLanguageQuery(naturalLanguageQuery, selectedTable);
+    onNaturalLanguageQuery(naturalLanguageQuery);
   };
 
   const handleTemplateLoad = (template: Partial<QueryConfig>) => {
@@ -60,31 +78,28 @@ export function ServiceNowQueryBuilder({
   return (
     <div className="query-builder">
       <div className="query-builder-header">
-        <h3>Browse ServiceNow Data</h3>
-        <p className="query-builder-description">
-          {mode === 'simple'
-            ? 'Describe the data you want in plain English'
-            : 'Build a custom query with filters and field selection'}
-        </p>
+        <div className="header-top">
+          <div>
+            <h3>Define your data</h3>
+            {/* <p className="query-builder-description">
+              {mode === 'simple'
+                ? 'Describe the data you want to see'
+                : 'Build a custom query with filters and field selection'}
+            </p> */}
+          </div>
 
-        {/* Mode Toggle */}
-        <div className="query-mode-toggle">
-          <button
-            type="button"
-            className={`mode-toggle-btn ${mode === 'simple' ? 'active' : ''}`}
-            onClick={() => onModeChange('simple')}
-            disabled={isLoading}
-          >
-            Simple
-          </button>
-          <button
-            type="button"
-            className={`mode-toggle-btn ${mode === 'advanced' ? 'active' : ''}`}
-            onClick={() => onModeChange('advanced')}
-            disabled={isLoading}
-          >
-            Advanced
-          </button>
+          {/* Advanced Mode Toggle */}
+          <label className="advanced-toggle">
+            <input
+              type="checkbox"
+              checked={mode === 'advanced'}
+              onChange={(e) =>
+                onModeChange(e.target.checked ? 'advanced' : 'simple')
+              }
+              disabled={isLoading}
+            />
+            <span>Advanced</span>
+          </label>
         </div>
       </div>
 
@@ -92,11 +107,56 @@ export function ServiceNowQueryBuilder({
         /* Simple Mode Form */
         <form onSubmit={handleSimpleSubmit} className="query-builder-form">
           <div className="form-row">
-            <label htmlFor="table-hint">Table (optional)</label>
+            <label htmlFor="nl-query">
+              What data do you want to report on?
+            </label>
+            <textarea
+              id="nl-query"
+              value={naturalLanguageQuery}
+              onChange={(e) => setNaturalLanguageQuery(e.target.value)}
+              placeholder="Show me critical priority incidents that have been opened in the last month"
+              disabled={isLoading}
+              rows={4}
+              className="nl-query-input"
+            />
+            {/* <div className="help-text">
+              Describe the data you want in natural language
+            </div> */}
+          </div>
+
+          <div className="form-row">
+            <label htmlFor="report-question">
+              What kind of report do you want to run?
+              <span className="label-hint">(optional)</span>
+            </label>
+            <textarea
+              id="report-question"
+              value={reportQuestion}
+              onChange={(e) => onReportQuestionChange(e.target.value)}
+              placeholder="Show me a trend line of incidents by month"
+              disabled={isLoading}
+              rows={3}
+              className="nl-query-input"
+            />
+          </div>
+
+          <button
+            type="submit"
+            className="query-execute-btn"
+            disabled={isLoading || !naturalLanguageQuery.trim()}
+          >
+            {isLoading ? 'Loading...' : 'Preview Data'}
+          </button>
+        </form>
+      ) : (
+        /* Advanced Mode Form */
+        <form onSubmit={handleAdvancedSubmit} className="query-builder-form">
+          <div className="form-row">
+            <label htmlFor="table">Table</label>
             <select
-              id="table-hint"
-              value={selectedTable}
-              onChange={(e) => setSelectedTable(e.target.value)}
+              id="table"
+              value={config.table}
+              onChange={(e) => setConfig({ ...config, table: e.target.value })}
               disabled={isLoading}
             >
               {COMMON_TABLES.map((table) => (
@@ -105,90 +165,29 @@ export function ServiceNowQueryBuilder({
                 </option>
               ))}
             </select>
-            <div className="help-text">
-              Helps narrow down which table to search (can be overridden by your description)
-            </div>
           </div>
 
           <div className="form-row">
-            <label htmlFor="nl-query">What data do you want?</label>
-            <textarea
-              id="nl-query"
-              value={naturalLanguageQuery}
-              onChange={(e) => setNaturalLanguageQuery(e.target.value)}
-              placeholder="Example: Show me all critical priority incidents that are still open&#10;Example: Get pending change requests with high risk&#10;Example: Find unassigned problems from the last 7 days"
+            <label htmlFor="query">
+              Filters
+              <span className="label-hint">
+                (Leave empty to get all records)
+              </span>
+            </label>
+            <input
+              id="query"
+              type="text"
+              value={config.query}
+              onChange={(e) => setConfig({ ...config, query: e.target.value })}
+              placeholder="priority=1^active=true"
               disabled={isLoading}
-              rows={4}
-              className="nl-query-input"
             />
-            <div className="help-text">
-              Describe the data you want in natural language
-            </div>
+            {/* <div className="help-text">
+              Use ServiceNow query syntax: = (equals), != (not equals), ^ (and),
+              ^OR (or)
+            </div> */}
           </div>
 
-          <button
-            type="submit"
-            className="query-execute-btn"
-            disabled={isLoading || !naturalLanguageQuery.trim()}
-          >
-            {isLoading ? 'Translating...' : 'Translate Query'}
-          </button>
-        </form>
-      ) : (
-        /* Advanced Mode Form */
-        <form onSubmit={handleAdvancedSubmit} className="query-builder-form">
-        <div className="form-row">
-          <label htmlFor="table">Table</label>
-          <select
-            id="table"
-            value={config.table}
-            onChange={(e) => setConfig({ ...config, table: e.target.value })}
-            disabled={isLoading}
-          >
-            {COMMON_TABLES.map((table) => (
-              <option key={table.value} value={table.value}>
-                {table.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-row">
-          <label htmlFor="query">
-            Filters
-            <span className="label-hint">
-              (optional - leave empty to get all records)
-            </span>
-          </label>
-          <input
-            id="query"
-            type="text"
-            value={config.query}
-            onChange={(e) => setConfig({ ...config, query: e.target.value })}
-            placeholder="priority=1^active=true"
-            disabled={isLoading}
-          />
-          <div className="help-text">
-            Use ServiceNow query syntax: = (equals), != (not equals), ^ (and), ^OR (or)
-          </div>
-        </div>
-
-        <div className="form-row">
-          <label htmlFor="fields">
-            Columns to Include
-            <span className="label-hint">(comma-separated, leave empty for all)</span>
-          </label>
-          <input
-            id="fields"
-            type="text"
-            value={config.fields}
-            onChange={(e) => setConfig({ ...config, fields: e.target.value })}
-            placeholder="number,short_description,priority,state"
-            disabled={isLoading}
-          />
-        </div>
-
-        <div className="form-row-group">
           <div className="form-row">
             <label htmlFor="limit">Limit</label>
             <input
@@ -198,104 +197,99 @@ export function ServiceNowQueryBuilder({
               max="10000"
               value={config.limit}
               onChange={(e) =>
-                setConfig({ ...config, limit: parseInt(e.target.value) || 100 })
+                setConfig({
+                  ...config,
+                  limit: parseInt(e.target.value) || 100,
+                })
               }
               disabled={isLoading}
             />
           </div>
 
           <div className="form-row">
-            <label htmlFor="displayValue">Display Value</label>
-            <select
-              id="displayValue"
-              value={config.displayValue}
-              onChange={(e) =>
-                setConfig({
-                  ...config,
-                  displayValue: e.target.value as 'true' | 'false' | 'all',
-                })
-              }
+            <label htmlFor="report-question-advanced">
+              What kind of report do you want to run?
+              <span className="label-hint">(optional)</span>
+            </label>
+            <textarea
+              id="report-question-advanced"
+              value={reportQuestion}
+              onChange={(e) => onReportQuestionChange(e.target.value)}
+              placeholder="Show me a trend line of incidents by month"
               disabled={isLoading}
-            >
-              <option value="true">Display Values</option>
-              <option value="false">Actual Values</option>
-              <option value="all">Both</option>
-            </select>
+              rows={3}
+              className="nl-query-input"
+            />
           </div>
-        </div>
 
-        <button
-          type="submit"
-          className="query-execute-btn"
-          disabled={isLoading || !config.table}
-        >
-          {isLoading ? 'Loading Data...' : 'Get Data'}
-        </button>
-      </form>
+          <button
+            type="submit"
+            className="query-execute-btn"
+            disabled={isLoading || !config.table}
+          >
+            {isLoading ? 'Loading Data...' : 'Preview Data'}
+          </button>
+        </form>
       )}
 
       {mode === 'advanced' && (
         <div className="query-examples">
-        <h4>Common Searches:</h4>
-        <div className="example-buttons">
-          <button
-            type="button"
-            onClick={() =>
-              handleTemplateLoad({
-                table: 'incident',
-                query: 'priority=1^active=true',
-                fields: 'number,short_description,priority,state,assigned_to',
-              })
-            }
-            disabled={isLoading}
-            className="example-btn"
-          >
-            Open P1 Incidents
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              handleTemplateLoad({
-                table: 'change_request',
-                query: 'state=1^ORstate=2',
-                fields: 'number,short_description,state,risk,priority',
-              })
-            }
-            disabled={isLoading}
-            className="example-btn"
-          >
-            Pending Changes
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              handleTemplateLoad({
-                table: 'incident',
-                query: 'assignment_group=',
-                fields: 'number,short_description,priority,sys_created_on',
-              })
-            }
-            disabled={isLoading}
-            className="example-btn"
-          >
-            Unassigned Incidents
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              handleTemplateLoad({
-                table: 'problem',
-                query: 'state=1^ORstate=2',
-                fields: 'number,short_description,state,priority',
-              })
-            }
-            disabled={isLoading}
-            className="example-btn"
-          >
-            Open Problems
-          </button>
+          <h4>Common Searches:</h4>
+          <div className="example-buttons">
+            <button
+              type="button"
+              onClick={() =>
+                handleTemplateLoad({
+                  table: 'incident',
+                  query: 'priority=1^active=true',
+                })
+              }
+              disabled={isLoading}
+              className="example-btn"
+            >
+              Open P1 Incidents
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleTemplateLoad({
+                  table: 'change_request',
+                  query: 'state=1^ORstate=2',
+                })
+              }
+              disabled={isLoading}
+              className="example-btn"
+            >
+              Pending Changes
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleTemplateLoad({
+                  table: 'incident',
+                  query: 'assignment_group=',
+                })
+              }
+              disabled={isLoading}
+              className="example-btn"
+            >
+              Unassigned Incidents
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                handleTemplateLoad({
+                  table: 'problem',
+                  query: 'state=1^ORstate=2',
+                })
+              }
+              disabled={isLoading}
+              className="example-btn"
+            >
+              Open Problems
+            </button>
+          </div>
         </div>
-      </div>
       )}
     </div>
   );

@@ -5,7 +5,6 @@ export interface QueryTranslation {
   table: string;
   tableLabel: string;
   encodedQuery: string;
-  fields: string[];
   limit: number;
   summary: string;
   displayValue?: 'true' | 'false' | 'all';
@@ -56,15 +55,6 @@ export function QueryTranslationPreview({
           )}
 
           <div className="detail-row">
-            <span className="detail-label">Columns:</span>
-            <span className="detail-value">
-              {translation.fields.length > 0
-                ? translation.fields.join(', ')
-                : 'All columns'}
-            </span>
-          </div>
-
-          <div className="detail-row">
             <span className="detail-label">Limit:</span>
             <span className="detail-value">{translation.limit} records</span>
           </div>
@@ -87,7 +77,7 @@ export function QueryTranslationPreview({
           className="translation-btn translation-btn-primary"
           disabled={isLoading}
         >
-          {isLoading ? 'Loading Data...' : 'Get Data'}
+          {isLoading ? 'Loading Data...' : 'Refresh Data'}
         </button>
       </div>
     </div>
