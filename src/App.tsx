@@ -74,7 +74,21 @@ function App() {
       setTranslationResult(result);
     } catch (error: any) {
       console.error('Translation error:', error);
-      const errorMsg = error.response?.data?.error || error.message || 'Failed to translate query';
+
+      // Extract error message from response
+      let errorMsg = 'Failed to translate query';
+      if (error.response?.data?.error) {
+        const apiError = error.response.data.error;
+        // Check if error is an object with message/detail or a string
+        if (typeof apiError === 'object') {
+          errorMsg = apiError.message || apiError.detail || JSON.stringify(apiError);
+        } else {
+          errorMsg = String(apiError);
+        }
+      } else if (error.message) {
+        errorMsg = error.message;
+      }
+
       setTranslationError(errorMsg);
     } finally {
       setIsTranslating(false);
