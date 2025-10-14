@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { QueryConfig, TableAPIResponse } from '../types/servicenow';
-import type { QueryTranslation } from '../components/QueryTranslationPreview';
+import type { QueryTranslation, QueryClarification } from '../components/QueryTranslationPreview';
 import type { ChartData } from '../types/chart';
 
 /**
@@ -39,19 +39,20 @@ function unwrapServiceNowResponse<T>(data: any): T {
 
 /**
  * Translate natural language query to structured ServiceNow query
+ * Can return either a translation or a clarification request
  */
 export async function translateNaturalLanguageQuery(
   query: string,
   schema: string,
   tableHint?: string
-): Promise<QueryTranslation> {
+): Promise<QueryTranslation | QueryClarification> {
   const response = await axios.post('/api/x_ipnll_data_ana_0/claude_ai/query_translate', {
     naturalLanguage: query,
     tableHint: tableHint,
     schema: schema,
   });
 
-  return unwrapServiceNowResponse<QueryTranslation>(response.data);
+  return unwrapServiceNowResponse<QueryTranslation | QueryClarification>(response.data);
 }
 
 /**

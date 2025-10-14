@@ -61,6 +61,11 @@ function App() {
     }
   };
 
+  // Type guard to check if result is a clarification
+  const isClarification = (result: QueryTranslation | QueryClarification): result is QueryClarification => {
+    return 'needsClarification' in result && result.needsClarification === true;
+  };
+
   const handleNaturalLanguageQuery = async (query: string, tableHint?: string) => {
     setIsTranslating(true);
     setTranslationError(null);
@@ -74,11 +79,11 @@ function App() {
 
       const result = await translateNaturalLanguageQuery(query, schema, tableHint);
 
-      // Check if result is a clarification request
-      if ('needsClarification' in result && result.needsClarification) {
-        setClarificationResult(result as QueryClarification);
+      // Check if result is a clarification request using type guard
+      if (isClarification(result)) {
+        setClarificationResult(result);
       } else {
-        setTranslationResult(result as QueryTranslation);
+        setTranslationResult(result);
       }
     } catch (error: any) {
       console.error('Translation error:', error);
@@ -264,11 +269,7 @@ function App() {
 
   const handleDataSourceChange = (source: DataSource) => {
     setDataSource(source);
-    if (source === 'file') {
-      setQueryResults(null);
-    } else {
-      setCurrentUpload(null);
-    }
+    // Don't clear data when switching modes - preserve both file uploads and query results
   };
 
   return (
@@ -287,6 +288,20 @@ function App() {
         onClearUpload={() => setCurrentUpload(null)}
         fileInputRef={fileInputRef}
         messagesEndRef={messagesEndRef}
+        queryMode={queryMode}
+        onModeChange={setQueryMode}
+        onExecuteQuery={handleExecuteQuery}
+        onNaturalLanguageQuery={handleNaturalLanguageQuery}
+        isQueryLoading={isQueryLoading}
+        isTranslating={isTranslating}
+        translationResult={translationResult}
+        clarificationResult={clarificationResult}
+        translationError={translationError}
+        onConfirmTranslation={handleConfirmTranslation}
+        onEditTranslation={handleEditTranslation}
+        onRetryTranslation={handleRetryTranslation}
+        onRefineClarification={handleRefineClarification}
+        onUseDefaultClarification={handleUseDefaultClarification}
       />
       <VisualizationPanel
         dataSource={dataSource}

@@ -1,7 +1,15 @@
 import React from 'react';
 import { Send, Paperclip, ChartLine, Database, Upload } from 'lucide-react';
-import type { DataSource } from '../types/servicenow';
+import type { DataSource, QueryConfig } from '../types/servicenow';
 import type { FileUpload } from '../services/serviceNowApi';
+import { ServiceNowQueryBuilder, type QueryMode } from './ServiceNowQueryBuilder';
+import {
+  QueryTranslationPreview,
+  QueryTranslationError,
+  QueryClarificationRequest,
+  type QueryTranslation,
+  type QueryClarification,
+} from './QueryTranslationPreview';
 
 export interface Message {
   id: string;
@@ -25,6 +33,21 @@ interface ChatPanelProps {
   onClearUpload: () => void;
   fileInputRef: React.RefObject<HTMLInputElement>;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  // Query builder props
+  queryMode: QueryMode;
+  onModeChange: (mode: QueryMode) => void;
+  onExecuteQuery: (config: QueryConfig) => void;
+  onNaturalLanguageQuery: (query: string, tableHint?: string) => void;
+  isQueryLoading: boolean;
+  isTranslating: boolean;
+  translationResult: QueryTranslation | null;
+  clarificationResult: QueryClarification | null;
+  translationError: string | null;
+  onConfirmTranslation: () => void;
+  onEditTranslation: () => void;
+  onRetryTranslation: () => void;
+  onRefineClarification: () => void;
+  onUseDefaultClarification: () => void;
 }
 
 export function ChatPanel({
@@ -41,6 +64,20 @@ export function ChatPanel({
   onClearUpload,
   fileInputRef,
   messagesEndRef,
+  queryMode,
+  onModeChange,
+  onExecuteQuery,
+  onNaturalLanguageQuery,
+  isQueryLoading,
+  isTranslating,
+  translationResult,
+  clarificationResult,
+  translationError,
+  onConfirmTranslation,
+  onEditTranslation,
+  onRetryTranslation,
+  onRefineClarification,
+  onUseDefaultClarification,
 }: ChatPanelProps) {
   return (
     <div className="chat-panel">
@@ -69,102 +106,116 @@ export function ChatPanel({
         </div>
       </div>
 
-      <div className="messages">
-        {messages.length === 0 ? (
-          <div className="welcome">
-            <p>
-              {dataSource === 'file'
-                ? 'Upload your exported data file (CSV, JSON, PDF) and ask questions to generate insights and visualizations.'
-                : 'Browse your ServiceNow tables, pull data, and get AI-powered insights.'}
-            </p>
-          </div>
-        ) : (
-          messages.map((message) => (
-            <div key={message.id} className={`message ${message.role}`}>
-              {message.hasToolUse && message.role === 'assistant' && (
-                <div className="chart-badge">
-                  <ChartLine size={14} /> Generated Chart
-                </div>
-              )}
-              <div className="message-content">{message.content}</div>
-            </div>
-          ))
-        )}
-        {isLoading && (
-          <div className="message assistant">
-            <div className="message-content loading">Thinking...</div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {dataSource === 'file' ? (
-        <form onSubmit={onSubmit} className="input-form">
-          {currentUpload && (
-            <div className="file-preview">
-              <span>{currentUpload.fileName}</span>
-              <button type="button" onClick={onClearUpload}>
-                ×
-              </button>
-            </div>
-          )}
-          <div className="input-row">
-            <button
-              type="button"
-              className="attach-btn"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isLoading}
-            >
-              <Paperclip size={20} />
-            </button>
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => onInputChange(e.target.value)}
-              placeholder="Ask about your ServiceNow data..."
-              disabled={isLoading}
-            />
-            <button
-              type="submit"
-              disabled={isLoading || (!input.trim() && !currentUpload)}
-            >
-              <Send size={20} />
-            </button>
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json,.csv,.txt,.pdf"
-            onChange={onFileSelect}
-            style={{ display: 'none' }}
+      {dataSource === 'query' ? (
+        /* Query Mode - Show Query Builder */
+        <div className="query-builder-section">
+          <ServiceNowQueryBuilder
+            onExecuteQuery={onExecuteQuery}
+            onNaturalLanguageQuery={onNaturalLanguageQuery}
+            isLoading={isQueryLoading || isTranslating}
+            mode={queryMode}
+            onModeChange={onModeChange}
           />
-        </form>
-      ) : (
-        <div className="query-input-section">
-          {hasQueryResults ? (
-            <form onSubmit={onSubmit} className="input-form">
-              <div className="input-row">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => onInputChange(e.target.value)}
-                  placeholder="Ask Claude about this data..."
-                  disabled={isLoading}
-                />
-                <button type="submit" disabled={isLoading || !input.trim()}>
-                  <Send size={20} />
-                </button>
-              </div>
-            </form>
-          ) : (
-            <div className="query-prompt">
-              <p>
-                Select a table and pull data from the panel on the right to
-                get started
-              </p>
-            </div>
+
+          {/* Show translation preview if in simple mode and translation succeeded */}
+          {queryMode === 'simple' && translationResult && (
+            <QueryTranslationPreview
+              translation={translationResult}
+              onConfirm={onConfirmTranslation}
+              onEdit={onEditTranslation}
+              isLoading={isQueryLoading}
+            />
+          )}
+
+          {/* Show clarification request if translation needs more info */}
+          {queryMode === 'simple' && clarificationResult && (
+            <QueryClarificationRequest
+              clarification={clarificationResult}
+              onRefine={onRefineClarification}
+              onUseDefault={clarificationResult.suggestion ? onUseDefaultClarification : undefined}
+            />
+          )}
+
+          {/* Show translation error if translation failed */}
+          {queryMode === 'simple' && translationError && (
+            <QueryTranslationError
+              error={translationError}
+              onRetry={onRetryTranslation}
+              onSwitchToAdvanced={() => onModeChange('advanced')}
+            />
           )}
         </div>
+      ) : (
+        /* File Mode - Show Chat Interface */
+        <>
+          <div className="messages">
+            {messages.length === 0 ? (
+              <div className="welcome">
+                <p>
+                  Upload your exported data file (CSV, JSON, PDF) and ask questions to generate insights and visualizations.
+                </p>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <div key={message.id} className={`message ${message.role}`}>
+                  {message.hasToolUse && message.role === 'assistant' && (
+                    <div className="chart-badge">
+                      <ChartLine size={14} /> Generated Chart
+                    </div>
+                  )}
+                  <div className="message-content">{message.content}</div>
+                </div>
+              ))
+            )}
+            {isLoading && (
+              <div className="message assistant">
+                <div className="message-content loading">Thinking...</div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <form onSubmit={onSubmit} className="input-form">
+            {currentUpload && (
+              <div className="file-preview">
+                <span>{currentUpload.fileName}</span>
+                <button type="button" onClick={onClearUpload}>
+                  ×
+                </button>
+              </div>
+            )}
+            <div className="input-row">
+              <button
+                type="button"
+                className="attach-btn"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+              >
+                <Paperclip size={20} />
+              </button>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => onInputChange(e.target.value)}
+                placeholder="Ask about your ServiceNow data..."
+                disabled={isLoading}
+              />
+              <button
+                type="submit"
+                disabled={isLoading || (!input.trim() && !currentUpload)}
+              >
+                <Send size={20} />
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json,.csv,.txt,.pdf"
+              onChange={onFileSelect}
+              style={{ display: 'none' }}
+            />
+          </form>
+        </>
       )}
     </div>
   );

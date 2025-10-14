@@ -1,17 +1,11 @@
 import React from 'react';
 import { ChartLine } from 'lucide-react';
-import { ServiceNowQueryBuilder, type QueryMode } from './ServiceNowQueryBuilder';
 import { DataPreview } from './DataPreview';
-import {
-  QueryTranslationPreview,
-  QueryTranslationError,
-  QueryClarificationRequest,
-  type QueryTranslation,
-  type QueryClarification,
-} from './QueryTranslationPreview';
 import { ChartRenderer } from './ChartRenderer';
 import type { DataSource, QueryConfig } from '../types/servicenow';
 import type { Message } from './ChatPanel';
+import type { QueryMode } from './ServiceNowQueryBuilder';
+import type { QueryTranslation, QueryClarification } from './QueryTranslationPreview';
 
 interface VisualizationPanelProps {
   dataSource: DataSource;
@@ -56,61 +50,30 @@ export function VisualizationPanel({
   onUseDefaultClarification,
   onAnalyze,
 }: VisualizationPanelProps) {
+  const hasCharts = messages.some((m) => m.chartData);
+  const hasData = queryResults && queryResults.data.length > 0;
+  const hasContent = hasCharts || hasData;
+
   return (
     <div className="visualization-panel">
-      {dataSource === 'query' ? (
+      {hasContent ? (
         <>
-          {/* Query Builder and Data Preview */}
-          <div className="query-section">
-            <ServiceNowQueryBuilder
-              onExecuteQuery={onExecuteQuery}
-              onNaturalLanguageQuery={onNaturalLanguageQuery}
-              isLoading={isQueryLoading || isTranslating}
-              mode={queryMode}
-              onModeChange={onModeChange}
-            />
-
-            {/* Show translation preview if in simple mode and translation succeeded */}
-            {queryMode === 'simple' && translationResult && (
-              <QueryTranslationPreview
-                translation={translationResult}
-                onConfirm={onConfirmTranslation}
-                onEdit={onEditTranslation}
-                isLoading={isQueryLoading}
-              />
-            )}
-
-            {/* Show clarification request if translation needs more info */}
-            {queryMode === 'simple' && clarificationResult && (
-              <QueryClarificationRequest
-                clarification={clarificationResult}
-                onRefine={onRefineClarification}
-                onUseDefault={clarificationResult.suggestion ? onUseDefaultClarification : undefined}
-              />
-            )}
-
-            {/* Show translation error if translation failed */}
-            {queryMode === 'simple' && translationError && (
-              <QueryTranslationError
-                error={translationError}
-                onRetry={onRetryTranslation}
-                onSwitchToAdvanced={() => onModeChange('advanced')}
-              />
-            )}
-
-            {/* Show data preview after query executes */}
-            {queryResults && (
-              <DataPreview
-                data={queryResults.data}
-                tableName={queryResults.tableName}
-                onAnalyze={onAnalyze}
-                isAnalyzing={isAnalyzing}
-              />
-            )}
+          <div className="visualization-header">
+            <h2>Analysis & Visualizations</h2>
           </div>
 
-          {/* Show charts if any exist */}
-          {messages.some((m) => m.chartData) && (
+          {/* Show data preview when query results exist */}
+          {hasData && (
+            <DataPreview
+              data={queryResults.data}
+              tableName={queryResults.tableName}
+              onAnalyze={onAnalyze}
+              isAnalyzing={isAnalyzing}
+            />
+          )}
+
+          {/* Show charts when messages have chart data */}
+          {hasCharts && (
             <div className="charts-container">
               {messages.map(
                 (message, index) =>
@@ -123,27 +86,15 @@ export function VisualizationPanel({
             </div>
           )}
         </>
-      ) : messages.some((m) => m.chartData) ? (
-        <>
-          <div className="visualization-header">
-            <h2>Analysis & Visualizations</h2>
-          </div>
-          <div className="charts-container">
-            {messages.map(
-              (message, index) =>
-                message.chartData && (
-                  <div key={`chart-${index}`} className="chart-wrapper">
-                    <ChartRenderer data={message.chartData} />
-                  </div>
-                )
-            )}
-          </div>
-        </>
       ) : (
         <div className="visualization-empty">
           <ChartLine size={48} className="empty-icon" />
           <h2>Analysis & Visualizations</h2>
-          <p>Charts and detailed analysis will appear here as you chat</p>
+          <p>
+            {dataSource === 'query'
+              ? 'Pull data using the form on the left to get started'
+              : 'Upload a file and ask questions to see visualizations'}
+          </p>
         </div>
       )}
     </div>
