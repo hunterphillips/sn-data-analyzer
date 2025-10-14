@@ -174,12 +174,25 @@ ClaudeConfig.prototype = {
       '4. Build the encoded query using proper ServiceNow syntax\n' +
       '5. Select relevant fields to return (include key identifying fields + fields mentioned in query)\n' +
       '6. Create a human-readable summary of what the query will search for\n' +
-      '7. Return ONLY valid JSON matching this exact format:\n\n' +
+      '7. Return ONLY valid JSON\n\n' +
+      '## Making Assumptions vs Asking for Clarification\n\n' +
+      'PREFER making reasonable assumptions. Only ask for clarification when truly ambiguous.\n\n' +
+      'Good assumptions to make:\n' +
+      '- Time period not specified? Default to last 30 days: sys_created_on>=javascript:gs.daysAgoStart(30)\n' +
+      '- Priority mentioned without number? Map "critical"=1, "high"=2, "moderate"=3, "low"=4\n' +
+      '- State mentioned as "open"? Use active=true\n' +
+      '- Limit not specified? Use 100\n\n' +
+      'If you MUST ask for clarification (rare), return JSON with clarification field:\n' +
+      '{\n' +
+      '  "clarification": "Your question to the user",\n' +
+      '  "suggestion": "Optional: A suggested default assumption you could make"\n' +
+      '}\n\n' +
+      'Otherwise, return the standard query format:\n' +
       '{\n' +
       '  "table": "table_name",\n' +
       '  "tableLabel": "Human Readable Table Name",\n' +
       '  "encodedQuery": "field1=value1^field2=value2",\n' +
-      '  "fields": ["field1", "field2", "field3"],\n' +
+      '  "fields": ["number", "short_description", "priority", "state", "sys_created_on"],\n' +
       '  "limit": 100,\n' +
       '  "displayValue": "true",\n' +
       '  "summary": "Human readable description of what this query searches for"\n' +
@@ -190,6 +203,7 @@ ClaudeConfig.prototype = {
       '- Use actual choice values (numbers) not labels\n' +
       '- If encodedQuery is empty string, it means "get all records"\n' +
       '- Always include key identifier fields like "number" and "short_description"\n' +
+      '- Always include sys_created_on for time-based queries\n' +
       '- Limit should typically be 100 unless user specifies otherwise\n' +
       '- DisplayValue should be "true" for human-readable results'
     );

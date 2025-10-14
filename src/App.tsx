@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChatPanel, type Message } from './components/ChatPanel';
 import { VisualizationPanel } from './components/VisualizationPanel';
 import { type QueryMode } from './components/ServiceNowQueryBuilder';
-import { type QueryTranslation } from './components/QueryTranslationPreview';
+import { type QueryTranslation, type QueryClarification } from './components/QueryTranslationPreview';
 import { formatSchemaForPrompt } from './data/serviceNowSchemas';
 import {
   translateNaturalLanguageQuery,
@@ -19,7 +19,7 @@ function App() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentUpload, setCurrentUpload] = useState<FileUpload | null>(null);
-  const [dataSource, setDataSource] = useState<DataSource>('file');
+  const [dataSource, setDataSource] = useState<DataSource>('query');
   const [queryResults, setQueryResults] = useState<{
     data: Record<string, any>[];
     tableName: string;
@@ -29,6 +29,7 @@ function App() {
   // Query translation state
   const [queryMode, setQueryMode] = useState<QueryMode>('simple');
   const [translationResult, setTranslationResult] = useState<QueryTranslation | null>(null);
+  const [clarificationResult, setClarificationResult] = useState<QueryClarification | null>(null);
   const [translationError, setTranslationError] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
 
@@ -64,6 +65,7 @@ function App() {
     setIsTranslating(true);
     setTranslationError(null);
     setTranslationResult(null);
+    setClarificationResult(null);
 
     try {
       const schema = tableHint
@@ -71,7 +73,13 @@ function App() {
         : formatSchemaForPrompt();
 
       const result = await translateNaturalLanguageQuery(query, schema, tableHint);
-      setTranslationResult(result);
+
+      // Check if result is a clarification request
+      if ('needsClarification' in result && result.needsClarification) {
+        setClarificationResult(result as QueryClarification);
+      } else {
+        setTranslationResult(result as QueryTranslation);
+      }
     } catch (error: any) {
       console.error('Translation error:', error);
 
@@ -140,6 +148,18 @@ function App() {
   const handleRetryTranslation = () => {
     // Clear error to allow user to try again
     setTranslationError(null);
+  };
+
+  const handleRefineClarification = () => {
+    // Clear clarification to allow user to refine query
+    setClarificationResult(null);
+  };
+
+  const handleUseDefaultClarification = () => {
+    // If there's a suggestion, we could add it to the query builder
+    // For now, just clear clarification and let user proceed
+    setClarificationResult(null);
+    // Optionally trigger a retry with modified query
   };
 
   const handleAnalyzeQueryResults = async () => {
@@ -274,6 +294,7 @@ function App() {
         queryMode={queryMode}
         queryResults={queryResults}
         translationResult={translationResult}
+        clarificationResult={clarificationResult}
         translationError={translationError}
         isQueryLoading={isQueryLoading}
         isTranslating={isTranslating}
@@ -284,6 +305,8 @@ function App() {
         onConfirmTranslation={handleConfirmTranslation}
         onEditTranslation={handleEditTranslation}
         onRetryTranslation={handleRetryTranslation}
+        onRefineClarification={handleRefineClarification}
+        onUseDefaultClarification={handleUseDefaultClarification}
         onAnalyze={handleAnalyzeQueryResults}
       />
     </div>

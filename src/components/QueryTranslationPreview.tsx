@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle, Edit, AlertCircle } from 'lucide-react';
+import { CheckCircle, Edit, AlertCircle, MessageCircle } from 'lucide-react';
 
 export interface QueryTranslation {
   table: string;
@@ -9,6 +9,12 @@ export interface QueryTranslation {
   limit: number;
   summary: string;
   displayValue?: 'true' | 'false' | 'all';
+}
+
+export interface QueryClarification {
+  needsClarification: true;
+  message: string;
+  suggestion: string | null;
 }
 
 interface QueryTranslationPreviewProps {
@@ -129,6 +135,59 @@ export function QueryTranslationError({
         >
           Try Again
         </button>
+      </div>
+    </div>
+  );
+}
+
+interface QueryClarificationRequestProps {
+  clarification: QueryClarification;
+  onRefine: () => void;
+  onUseDefault?: () => void;
+}
+
+export function QueryClarificationRequest({
+  clarification,
+  onRefine,
+  onUseDefault,
+}: QueryClarificationRequestProps) {
+  return (
+    <div className="query-clarification-request">
+      <div className="translation-header">
+        <MessageCircle size={20} className="clarification-icon" />
+        <h4>Need More Information</h4>
+      </div>
+
+      <div className="translation-content">
+        <p className="clarification-message">{clarification.message}</p>
+        {clarification.suggestion && (
+          <p className="clarification-suggestion">
+            <strong>Suggestion:</strong> {clarification.suggestion}
+          </p>
+        )}
+        <p className="clarification-help">
+          Please refine your request with more details, or I can use a default assumption.
+        </p>
+      </div>
+
+      <div className="translation-actions">
+        <button
+          type="button"
+          onClick={onRefine}
+          className="translation-btn translation-btn-secondary"
+        >
+          <Edit size={16} />
+          Refine Query
+        </button>
+        {clarification.suggestion && onUseDefault && (
+          <button
+            type="button"
+            onClick={onUseDefault}
+            className="translation-btn translation-btn-primary"
+          >
+            Use Default
+          </button>
+        )}
       </div>
     </div>
   );

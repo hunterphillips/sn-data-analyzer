@@ -52,19 +52,19 @@ export function ChatPanel({
         <div className="data-source-toggle">
           <button
             type="button"
-            className={`toggle-btn ${dataSource === 'file' ? 'active' : ''}`}
-            onClick={() => onDataSourceChange('file')}
-          >
-            <Upload size={16} />
-            Upload File
-          </button>
-          <button
-            type="button"
             className={`toggle-btn ${dataSource === 'query' ? 'active' : ''}`}
             onClick={() => onDataSourceChange('query')}
           >
             <Database size={16} />
             Data Lookup
+          </button>
+          <button
+            type="button"
+            className={`toggle-btn ${dataSource === 'file' ? 'active' : ''}`}
+            onClick={() => onDataSourceChange('file')}
+          >
+            <Upload size={16} />
+            Upload File
           </button>
         </div>
       </div>

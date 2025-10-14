@@ -82,6 +82,18 @@
     // Parse and validate translation
     var translation = JSON.parse(translationJSON);
 
+    // Check if this is a clarification request
+    if (translation.clarification) {
+      response.setStatus(200);
+      response.setBody({
+        needsClarification: true,
+        message: translation.clarification,
+        suggestion: translation.suggestion || null,
+      });
+      return;
+    }
+
+    // Validate standard query translation format
     if (!translation.table || !translation.summary) {
       response.setStatus(500);
       response.setBody({

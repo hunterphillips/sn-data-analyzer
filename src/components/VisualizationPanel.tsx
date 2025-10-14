@@ -5,7 +5,9 @@ import { DataPreview } from './DataPreview';
 import {
   QueryTranslationPreview,
   QueryTranslationError,
+  QueryClarificationRequest,
   type QueryTranslation,
+  type QueryClarification,
 } from './QueryTranslationPreview';
 import { ChartRenderer } from './ChartRenderer';
 import type { DataSource, QueryConfig } from '../types/servicenow';
@@ -17,6 +19,7 @@ interface VisualizationPanelProps {
   queryMode: QueryMode;
   queryResults: { data: Record<string, any>[]; tableName: string } | null;
   translationResult: QueryTranslation | null;
+  clarificationResult: QueryClarification | null;
   translationError: string | null;
   isQueryLoading: boolean;
   isTranslating: boolean;
@@ -27,6 +30,8 @@ interface VisualizationPanelProps {
   onConfirmTranslation: () => void;
   onEditTranslation: () => void;
   onRetryTranslation: () => void;
+  onRefineClarification: () => void;
+  onUseDefaultClarification: () => void;
   onAnalyze: () => void;
 }
 
@@ -36,6 +41,7 @@ export function VisualizationPanel({
   queryMode,
   queryResults,
   translationResult,
+  clarificationResult,
   translationError,
   isQueryLoading,
   isTranslating,
@@ -46,6 +52,8 @@ export function VisualizationPanel({
   onConfirmTranslation,
   onEditTranslation,
   onRetryTranslation,
+  onRefineClarification,
+  onUseDefaultClarification,
   onAnalyze,
 }: VisualizationPanelProps) {
   return (
@@ -69,6 +77,15 @@ export function VisualizationPanel({
                 onConfirm={onConfirmTranslation}
                 onEdit={onEditTranslation}
                 isLoading={isQueryLoading}
+              />
+            )}
+
+            {/* Show clarification request if translation needs more info */}
+            {queryMode === 'simple' && clarificationResult && (
+              <QueryClarificationRequest
+                clarification={clarificationResult}
+                onRefine={onRefineClarification}
+                onUseDefault={clarificationResult.suggestion ? onUseDefaultClarification : undefined}
               />
             )}
 
