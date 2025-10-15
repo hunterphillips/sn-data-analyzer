@@ -452,6 +452,64 @@
   line-height: 1.4;
 }
 
+/* Chart Empty State Styles */
+.chart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  text-align: center;
+  background: #fafafa;
+  min-height: 300px;
+}
+
+.chart-empty-icon {
+  color: #adb5bd;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.chart-empty h4 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.chart-empty p {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: #6c757d;
+  line-height: 1.5;
+  max-width: 400px;
+}
+
+.chart-empty ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  max-width: 400px;
+}
+
+.chart-empty ul li {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #6c757d;
+  line-height: 1.5;
+  padding-left: 24px;
+  position: relative;
+}
+
+.chart-empty ul li::before {
+  content: '•';
+  position: absolute;
+  left: 8px;
+  color: #adb5bd;
+  font-weight: bold;
+}
+
 /* Data Source Toggle */
 .data-source-toggle {
   display: flex;

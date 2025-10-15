@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, AlertCircle, Inbox } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -22,7 +22,11 @@ import {
   Legend,
 } from 'recharts';
 import type { ChartData } from '../types/chart';
-import { validateChartData, hasFieldMismatchError } from '../utils/chartValidation';
+import {
+  validateChartData,
+  hasFieldMismatchError,
+  isChartDataEmpty,
+} from '../utils/chartValidation';
 
 // Color palette for charts
 const COLORS = [
@@ -87,8 +91,7 @@ const ChartError: React.FC<ChartErrorProps> = ({ errors, chartData }) => {
         <h4>Unable to render chart</h4>
       </div>
       <p className="chart-error-message">
-        The chart data has validation errors. This usually means the AI generated
-        mismatched field names.
+        The chart data has validation errors.
       </p>
       <ul className="chart-error-list">
         {errors.map((err, i) => (
@@ -109,12 +112,44 @@ const ChartError: React.FC<ChartErrorProps> = ({ errors, chartData }) => {
   );
 };
 
+interface EmptyChartProps {
+  title: string;
+  description: string;
+}
+
+const EmptyChart: React.FC<EmptyChartProps> = ({ title, description }) => {
+  return (
+    <div className="chart-card">
+      <div className="chart-header">
+        <div className="chart-header-content">
+          <h3 className="chart-title">{title}</h3>
+          <p className="chart-description">{description}</p>
+        </div>
+      </div>
+      <div className="chart-empty">
+        <Inbox size={48} className="chart-empty-icon" />
+        <h4>No data to display</h4>
+        <p>
+          Your query or analysis returned no matching records. This could mean:
+        </p>
+        <ul>
+          <li>No data matches your search criteria</li>
+          <li>The filtered dataset is empty</li>
+          <li>Try adjusting your query or filters</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
+
 function BarChartComponent({ data }: { data: ChartData }) {
   // Find the numeric data key from the first data item
   const firstDataItem = data.data[0] || {};
-  const dataKey = Object.keys(firstDataItem).find(
-    (key) => key !== data.config.xAxisKey && typeof firstDataItem[key] === 'number'
-  ) || Object.keys(data.chartConfig)[0];
+  const dataKey =
+    Object.keys(firstDataItem).find(
+      (key) =>
+        key !== data.config.xAxisKey && typeof firstDataItem[key] === 'number'
+    ) || Object.keys(data.chartConfig)[0];
 
   const color = data.chartConfig[dataKey]?.color || COLORS[0];
 
@@ -167,7 +202,9 @@ function MultiBarChartComponent({ data }: { data: ChartData }) {
             <Bar
               key={key}
               dataKey={key}
-              fill={data.chartConfig[key]?.color || COLORS[index % COLORS.length]}
+              fill={
+                data.chartConfig[key]?.color || COLORS[index % COLORS.length]
+              }
               radius={[4, 4, 0, 0]}
             />
           ))}
@@ -202,7 +239,9 @@ function LineChartComponent({ data }: { data: ChartData }) {
               key={key}
               type="monotone"
               dataKey={key}
-              stroke={data.chartConfig[key]?.color || COLORS[index % COLORS.length]}
+              stroke={
+                data.chartConfig[key]?.color || COLORS[index % COLORS.length]
+              }
               strokeWidth={2}
               dot={{ r: 4 }}
             />
@@ -219,24 +258,30 @@ function PieChartComponent({ data }: { data: ChartData }) {
   const keys = Object.keys(firstDataItem);
 
   // Find the numeric field (value) - look for number type or common value field names
-  const valueKey = keys.find(
-    (key) => typeof firstDataItem[key] === 'number'
-  ) || keys.find(
-    (key) => key.toLowerCase().includes('value') ||
-             key.toLowerCase().includes('count') ||
-             key.toLowerCase().includes('total')
-  ) || 'value';
+  const valueKey =
+    keys.find((key) => typeof firstDataItem[key] === 'number') ||
+    keys.find(
+      (key) =>
+        key.toLowerCase().includes('value') ||
+        key.toLowerCase().includes('count') ||
+        key.toLowerCase().includes('total')
+    ) ||
+    'value';
 
   // Find the label field (name/segment) - use the non-numeric field
-  const nameKey = keys.find(
-    (key) => key !== valueKey && typeof firstDataItem[key] === 'string'
-  ) || keys.find(
-    (key) => key.toLowerCase().includes('name') ||
-             key.toLowerCase().includes('label') ||
-             key.toLowerCase().includes('segment') ||
-             key.toLowerCase().includes('type') ||
-             key.toLowerCase().includes('category')
-  ) || 'segment';
+  const nameKey =
+    keys.find(
+      (key) => key !== valueKey && typeof firstDataItem[key] === 'string'
+    ) ||
+    keys.find(
+      (key) =>
+        key.toLowerCase().includes('name') ||
+        key.toLowerCase().includes('label') ||
+        key.toLowerCase().includes('segment') ||
+        key.toLowerCase().includes('type') ||
+        key.toLowerCase().includes('category')
+    ) ||
+    'segment';
 
   const chartData = data.data.map((item, index) => ({
     ...item,
@@ -303,8 +348,12 @@ function AreaChartComponent({
               key={key}
               type="monotone"
               dataKey={key}
-              stroke={data.chartConfig[key]?.color || COLORS[index % COLORS.length]}
-              fill={data.chartConfig[key]?.color || COLORS[index % COLORS.length]}
+              stroke={
+                data.chartConfig[key]?.color || COLORS[index % COLORS.length]
+              }
+              fill={
+                data.chartConfig[key]?.color || COLORS[index % COLORS.length]
+              }
               fillOpacity={0.6}
               stackId={stacked ? 'stack' : undefined}
             />
@@ -318,9 +367,11 @@ function AreaChartComponent({
 function HorizontalBarChartComponent({ data }: { data: ChartData }) {
   // Find the numeric data key from the first data item
   const firstDataItem = data.data[0] || {};
-  const dataKey = Object.keys(firstDataItem).find(
-    (key) => key !== data.config.xAxisKey && typeof firstDataItem[key] === 'number'
-  ) || Object.keys(data.chartConfig)[0];
+  const dataKey =
+    Object.keys(firstDataItem).find(
+      (key) =>
+        key !== data.config.xAxisKey && typeof firstDataItem[key] === 'number'
+    ) || Object.keys(data.chartConfig)[0];
 
   const color = data.chartConfig[dataKey]?.color || COLORS[0];
 
@@ -375,9 +426,15 @@ function StackedBarChartComponent({ data }: { data: ChartData }) {
             <Bar
               key={key}
               dataKey={key}
-              fill={data.chartConfig[key]?.color || COLORS[index % COLORS.length]}
+              fill={
+                data.chartConfig[key]?.color || COLORS[index % COLORS.length]
+              }
               stackId="stack"
-              radius={index === Object.keys(data.chartConfig).length - 1 ? [4, 4, 0, 0] : undefined}
+              radius={
+                index === Object.keys(data.chartConfig).length - 1
+                  ? [4, 4, 0, 0]
+                  : undefined
+              }
             />
           ))}
         </BarChart>
@@ -398,8 +455,12 @@ function ScatterChartComponent({ data }: { data: ChartData }) {
   );
 
   // Use configured keys or fall back to first two numeric fields
-  const xKey = numericKeys.includes(xAxisKey) ? xAxisKey : numericKeys[0] || 'x';
-  const yKey = numericKeys.includes(yAxisKey) ? yAxisKey : numericKeys[1] || numericKeys[0] || 'y';
+  const xKey = numericKeys.includes(xAxisKey)
+    ? xAxisKey
+    : numericKeys[0] || 'x';
+  const yKey = numericKeys.includes(yAxisKey)
+    ? yAxisKey
+    : numericKeys[1] || numericKeys[0] || 'y';
 
   return (
     <ChartCard
@@ -410,8 +471,18 @@ function ScatterChartComponent({ data }: { data: ChartData }) {
       <ResponsiveContainer width="100%" height={400}>
         <ScatterChart>
           <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-          <XAxis dataKey={xKey} type="number" name={xKey} tick={{ fontSize: 12 }} />
-          <YAxis dataKey={yKey} type="number" name={yKey} tick={{ fontSize: 12 }} />
+          <XAxis
+            dataKey={xKey}
+            type="number"
+            name={xKey}
+            tick={{ fontSize: 12 }}
+          />
+          <YAxis
+            dataKey={yKey}
+            type="number"
+            name={yKey}
+            tick={{ fontSize: 12 }}
+          />
           <ZAxis range={[60, 400]} />
           <Tooltip cursor={{ strokeDasharray: '3 3' }} />
           <Legend />
@@ -427,23 +498,29 @@ function DonutChartComponent({ data }: { data: ChartData }) {
   const firstDataItem = data.data[0] || {};
   const keys = Object.keys(firstDataItem);
 
-  const valueKey = keys.find(
-    (key) => typeof firstDataItem[key] === 'number'
-  ) || keys.find(
-    (key) => key.toLowerCase().includes('value') ||
-             key.toLowerCase().includes('count') ||
-             key.toLowerCase().includes('total')
-  ) || 'value';
+  const valueKey =
+    keys.find((key) => typeof firstDataItem[key] === 'number') ||
+    keys.find(
+      (key) =>
+        key.toLowerCase().includes('value') ||
+        key.toLowerCase().includes('count') ||
+        key.toLowerCase().includes('total')
+    ) ||
+    'value';
 
-  const nameKey = keys.find(
-    (key) => key !== valueKey && typeof firstDataItem[key] === 'string'
-  ) || keys.find(
-    (key) => key.toLowerCase().includes('name') ||
-             key.toLowerCase().includes('label') ||
-             key.toLowerCase().includes('segment') ||
-             key.toLowerCase().includes('type') ||
-             key.toLowerCase().includes('category')
-  ) || 'segment';
+  const nameKey =
+    keys.find(
+      (key) => key !== valueKey && typeof firstDataItem[key] === 'string'
+    ) ||
+    keys.find(
+      (key) =>
+        key.toLowerCase().includes('name') ||
+        key.toLowerCase().includes('label') ||
+        key.toLowerCase().includes('segment') ||
+        key.toLowerCase().includes('type') ||
+        key.toLowerCase().includes('category')
+    ) ||
+    'segment';
 
   const chartData = data.data.map((item, index) => ({
     ...item,
@@ -533,6 +610,17 @@ function ComposedChartComponent({ data }: { data: ChartData }) {
 }
 
 export function ChartRenderer({ data }: { data: ChartData }) {
+  // Check for empty data first (legitimate empty state)
+  if (isChartDataEmpty(data)) {
+    console.info('ℹ️  Chart has no data - showing empty state');
+    return (
+      <EmptyChart
+        title={data.config.title}
+        description={data.config.description}
+      />
+    );
+  }
+
   // Validate chart data before rendering
   const validation = validateChartData(data);
 
@@ -544,7 +632,7 @@ export function ChartRenderer({ data }: { data: ChartData }) {
     if (hasFieldMismatchError(validation)) {
       console.error(
         '⚠️  Field mismatch detected - this may indicate a prompt engineering issue. ' +
-        'The AI generated chartConfig keys that do not match the data fields.'
+          'The AI generated chartConfig keys that do not match the data fields.'
       );
     }
   }
@@ -596,7 +684,9 @@ export function ChartRenderer({ data }: { data: ChartData }) {
     return (
       <ChartError
         errors={[
-          `Error rendering chart: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          `Error rendering chart: ${
+            error instanceof Error ? error.message : 'Unknown error'
+          }`,
         ]}
         chartData={data}
       />

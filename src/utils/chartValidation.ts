@@ -37,25 +37,27 @@ export function validateChartData(chartData: ChartData): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Check 1: Has data
+  // Check 1: Has no data (warning)
   if (!chartData.data || chartData.data.length === 0) {
-    errors.push('Chart has no data to display');
-    return { valid: false, errors, warnings };
+    warnings.push('Chart has no data to display');
+    return { valid: true, errors, warnings };
   }
 
   // Get field names from first data record
   const dataFields = Object.keys(chartData.data[0] || {});
 
   if (dataFields.length === 0) {
-    errors.push('Chart data records are empty');
-    return { valid: false, errors, warnings };
+    warnings.push('Chart data records are empty');
+    return { valid: true, errors, warnings };
   }
 
   // Check 2: Validate xAxisKey exists in data
   const xAxisKey = chartData.config.xAxisKey;
   if (xAxisKey && !dataFields.includes(xAxisKey)) {
     errors.push(
-      `X-axis field "${xAxisKey}" not found in data. Available fields: ${dataFields.join(', ')}`
+      `X-axis field "${xAxisKey}" not found in data. Available fields: ${dataFields.join(
+        ', '
+      )}`
     );
   }
 
@@ -63,41 +65,27 @@ export function validateChartData(chartData: ChartData): ValidationResult {
   const yAxisKey = chartData.config.yAxisKey;
   if (yAxisKey && !dataFields.includes(yAxisKey)) {
     errors.push(
-      `Y-axis field "${yAxisKey}" not found in data. Available fields: ${dataFields.join(', ')}`
+      `Y-axis field "${yAxisKey}" not found in data. Available fields: ${dataFields.join(
+        ', '
+      )}`
     );
   }
 
   // Check 4: Validate chartConfig keys exist in data
-  // This is the CRITICAL check that prevents field name mismatches
   const configFields = Object.keys(chartData.chartConfig || {});
-  const invalidFields = configFields.filter((field) => !dataFields.includes(field));
+  const invalidFields = configFields.filter(
+    (field) => !dataFields.includes(field)
+  );
 
   if (invalidFields.length > 0) {
     errors.push(
-      `Chart configuration references fields not found in data: ${invalidFields.join(', ')}. ` +
-        `Available fields in data: ${dataFields.join(', ')}`
+      `Chart configuration references fields not found in data: ${invalidFields.join(
+        ', '
+      )}. ` + `Available fields in data: ${dataFields.join(', ')}`
     );
   }
 
-  // Check 5: Data has values for configured fields (warnings only)
-  const firstRow = chartData.data[0];
-  configFields.forEach((field) => {
-    if (dataFields.includes(field)) {
-      const value = firstRow[field];
-      if (value === undefined || value === null) {
-        warnings.push(`Field "${field}" has no data in first record`);
-      }
-    }
-  });
-
-  // Check 6: Warn about pie charts with multiple metrics
-  if (chartData.chartType === 'pie' && configFields.length > 1) {
-    warnings.push(
-      'Pie chart with multiple metrics may be confusing. Consider using a bar chart instead.'
-    );
-  }
-
-  // Check 7: Warn if chart type requires xAxisKey but it's missing
+  // Warn if chart type requires xAxisKey but it's missing
   const chartTypesRequiringXAxis: ChartData['chartType'][] = [
     'bar',
     'multiBar',
@@ -115,12 +103,16 @@ export function validateChartData(chartData: ChartData): ValidationResult {
     );
   }
 
-  // Check 8: Warn if no chartConfig provided for multi-series charts
+  // Warn if no chartConfig provided for multi-series charts
   if (
-    ['multiBar', 'line', 'stackedArea', 'stackedBar', 'composed'].includes(chartData.chartType) &&
+    ['multiBar', 'line', 'stackedArea', 'stackedBar', 'composed'].includes(
+      chartData.chartType
+    ) &&
     configFields.length === 0
   ) {
-    warnings.push(`Chart type "${chartData.chartType}" has no series defined in chartConfig`);
+    warnings.push(
+      `Chart type "${chartData.chartType}" has no series defined in chartConfig`
+    );
   }
 
   return {
@@ -152,4 +144,12 @@ export function hasFieldMismatchError(result: ValidationResult): boolean {
       err.includes('X-axis field') ||
       err.includes('Y-axis field')
   );
+}
+
+/**
+ * Helper to check if chart data is empty
+ * (useful for showing empty state instead of rendering attempt)
+ */
+export function isChartDataEmpty(chartData: ChartData): boolean {
+  return !chartData.data || chartData.data.length === 0;
 }
