@@ -99,7 +99,7 @@ export function ChatPanel({
   onToggleQueryBuilder,
 }: ChatPanelProps) {
   return (
-    <div className="chat-panel">
+    <div className="chat-panel surface-panel">
       <div className="chat-header">
         <h2>ServiceNow Data Analyst</h2>
         {/* <p className="powered-by">Powered by Claude</p> */}
@@ -108,7 +108,9 @@ export function ChatPanel({
         <div className="data-source-toggle">
           <button
             type="button"
-            className={`toggle-btn ${dataSource === 'query' ? 'active' : ''}`}
+            className={`btn btn--subtle toggle-btn ${
+              dataSource === 'query' ? 'is-active' : ''
+            }`}
             onClick={() => onDataSourceChange('query')}
           >
             <Database size={16} />
@@ -116,7 +118,9 @@ export function ChatPanel({
           </button>
           <button
             type="button"
-            className={`toggle-btn ${dataSource === 'file' ? 'active' : ''}`}
+            className={`btn btn--subtle toggle-btn ${
+              dataSource === 'file' ? 'is-active' : ''
+            }`}
             onClick={() => onDataSourceChange('file')}
           >
             <Upload size={16} />
@@ -135,7 +139,7 @@ export function ChatPanel({
               {/* toggle-query-builder-btn */}
               <button
                 onClick={onToggleQueryBuilder}
-                className="chart-collapse-btn"
+                className="btn btn--icon chart-collapse-btn"
               >
                 {isQueryBuilderExpanded ? (
                   <>
@@ -287,7 +291,11 @@ export function ChatPanel({
             {currentUpload && (
               <div className="file-preview">
                 <span>{currentUpload.fileName}</span>
-                <button type="button" onClick={onClearUpload}>
+                <button
+                  type="button"
+                  className="btn btn--icon btn--ghost"
+                  onClick={onClearUpload}
+                >
                   ×
                 </button>
               </div>
@@ -295,7 +303,7 @@ export function ChatPanel({
             <div className="input-row">
               <button
                 type="button"
-                className="attach-btn"
+                className="btn btn--icon btn--ghost"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
               >
@@ -310,6 +318,7 @@ export function ChatPanel({
               />
               <button
                 type="submit"
+                className="btn btn--primary"
                 disabled={isLoading || (!input.trim() && !currentUpload)}
               >
                 <Send size={20} />

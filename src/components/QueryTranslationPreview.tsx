@@ -30,7 +30,7 @@ export function QueryTranslationPreview({
   isLoading = false,
 }: QueryTranslationPreviewProps) {
   return (
-    <div className="query-translation-preview">
+    <div className="card query-translation-preview">
       <div className="translation-header">
         <CheckCircle size={20} className="translation-icon" />
         <h4>Query Preview</h4>
@@ -65,7 +65,7 @@ export function QueryTranslationPreview({
         <button
           type="button"
           onClick={onEdit}
-          className="translation-btn translation-btn-secondary"
+          className="btn translation-btn translation-btn-secondary"
           disabled={isLoading}
         >
           <Edit size={16} />
@@ -74,7 +74,7 @@ export function QueryTranslationPreview({
         <button
           type="button"
           onClick={onConfirm}
-          className="translation-btn translation-btn-primary"
+          className="btn translation-btn translation-btn-primary"
           disabled={isLoading}
         >
           {isLoading ? 'Loading Data...' : 'Refresh Data'}
@@ -96,7 +96,7 @@ export function QueryTranslationError({
   onSwitchToAdvanced,
 }: QueryTranslationErrorProps) {
   return (
-    <div className="query-translation-error">
+    <div className="card query-translation-error">
       <div className="translation-header">
         <AlertCircle size={20} className="error-icon" />
         <h4>Could Not Translate Query</h4>
@@ -113,7 +113,7 @@ export function QueryTranslationError({
         <button
           type="button"
           onClick={onSwitchToAdvanced}
-          className="translation-btn translation-btn-secondary"
+          className="btn translation-btn translation-btn-secondary"
         >
           <Edit size={16} />
           Advanced Mode
@@ -121,7 +121,7 @@ export function QueryTranslationError({
         <button
           type="button"
           onClick={onRetry}
-          className="translation-btn translation-btn-primary"
+          className="btn translation-btn translation-btn-primary"
         >
           Try Again
         </button>
@@ -142,7 +142,7 @@ export function QueryClarificationRequest({
   onUseDefault,
 }: QueryClarificationRequestProps) {
   return (
-    <div className="query-clarification-request">
+    <div className="card query-clarification-request">
       <div className="translation-header">
         <MessageCircle size={20} className="clarification-icon" />
         <h4>Need More Information</h4>
@@ -164,7 +164,7 @@ export function QueryClarificationRequest({
         <button
           type="button"
           onClick={onRefine}
-          className="translation-btn translation-btn-secondary"
+          className="btn translation-btn translation-btn-secondary"
         >
           <Edit size={16} />
           Refine Query
@@ -173,7 +173,7 @@ export function QueryClarificationRequest({
           <button
             type="button"
             onClick={onUseDefault}
-            className="translation-btn translation-btn-primary"
+            className="btn translation-btn translation-btn-primary"
           >
             Use Default
           </button>
