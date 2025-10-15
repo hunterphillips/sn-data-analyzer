@@ -78,7 +78,7 @@ export function ServiceNowQueryBuilder({
   return (
     <div className="query-builder">
       {/* Advanced Mode Toggle */}
-      <label className="advanced-toggle">
+      <label className="btn btn--subtle advanced-toggle">
         <input
           type="checkbox"
           checked={mode === 'advanced'}
@@ -129,7 +129,7 @@ export function ServiceNowQueryBuilder({
 
           <button
             type="submit"
-            className="query-execute-btn"
+            className="btn btn--success query-execute-btn"
             disabled={isLoading || !naturalLanguageQuery.trim()}
           >
             {isLoading ? 'Loading...' : 'Preview'}
@@ -211,7 +211,7 @@ export function ServiceNowQueryBuilder({
 
           <button
             type="submit"
-            className="query-execute-btn"
+            className="btn btn--success query-execute-btn"
             disabled={isLoading || !config.table}
           >
             {isLoading ? 'Loading Data...' : 'Preview'}
@@ -232,7 +232,7 @@ export function ServiceNowQueryBuilder({
                 })
               }
               disabled={isLoading}
-              className="example-btn"
+              className="btn btn--outline example-btn"
             >
               Open P1 Incidents
             </button>
@@ -245,7 +245,7 @@ export function ServiceNowQueryBuilder({
                 })
               }
               disabled={isLoading}
-              className="example-btn"
+              className="btn btn--outline example-btn"
             >
               Pending Changes
             </button>
@@ -258,7 +258,7 @@ export function ServiceNowQueryBuilder({
                 })
               }
               disabled={isLoading}
-              className="example-btn"
+              className="btn btn--outline example-btn"
             >
               Unassigned Incidents
             </button>
@@ -271,7 +271,7 @@ export function ServiceNowQueryBuilder({
                 })
               }
               disabled={isLoading}
-              className="example-btn"
+              className="btn btn--outline example-btn"
             >
               Open Problems
             </button>

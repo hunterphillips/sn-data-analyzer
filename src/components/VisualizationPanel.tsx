@@ -57,7 +57,7 @@ export function VisualizationPanel({
   const hasContent = hasCharts || hasData;
 
   return (
-    <div className="visualization-panel">
+    <div className="visualization-panel surface-panel">
       {hasContent ? (
         <>
           <div className="visualization-header">

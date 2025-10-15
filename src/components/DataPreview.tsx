@@ -179,7 +179,7 @@ export function DataPreview({
   const hasMore = data.length > 50;
 
   return (
-    <div className="data-preview">
+    <div className="card data-preview">
       <div className="data-preview-header">
         <div className="data-preview-info">
           <h3>Data Preview</h3>
@@ -189,18 +189,12 @@ export function DataPreview({
             {hasMore && ' (showing first 50)'}
           </p>
         </div>
-        <button onClick={onToggle} className="toggle-preview-btn">
-          {isExpanded ? (
-            <>
-              <ChevronUp size={16} />
-              Hide Preview
-            </>
-          ) : (
-            <>
-              <ChevronDown size={16} />
-              Show Preview
-            </>
-          )}
+        <button
+          onClick={onToggle}
+          className="btn btn--icon chart-collapse-btn"
+          aria-label={isExpanded ? 'Hide preview' : 'Show preview'}
+        >
+          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
       </div>
 

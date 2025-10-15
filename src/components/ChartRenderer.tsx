@@ -56,14 +56,14 @@ const ChartCard: React.FC<ChartCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
-    <div className="chart-card">
+    <div className="card chart-card">
       <div className="chart-header">
         <div className="chart-header-content">
           <h3 className="chart-title">{title}</h3>
           <p className="chart-description">{description}</p>
         </div>
         <button
-          className="chart-collapse-btn"
+          className="btn btn--icon chart-collapse-btn"
           onClick={() => setIsExpanded(!isExpanded)}
           aria-label={isExpanded ? 'Collapse chart' : 'Expand chart'}
         >
@@ -85,7 +85,7 @@ const ChartError: React.FC<ChartErrorProps> = ({ errors, chartData }) => {
   const [showDetails, setShowDetails] = useState(false);
 
   return (
-    <div className="chart-error">
+    <div className="card chart-error">
       <div className="chart-error-header">
         <AlertCircle size={24} className="chart-error-icon" />
         <h4>Unable to render chart</h4>
@@ -119,7 +119,7 @@ interface EmptyChartProps {
 
 const EmptyChart: React.FC<EmptyChartProps> = ({ title, description }) => {
   return (
-    <div className="chart-card">
+    <div className="card chart-card">
       <div className="chart-header">
         <div className="chart-header-content">
           <h3 className="chart-title">{title}</h3>
