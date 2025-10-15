@@ -721,12 +721,6 @@
   font-style: italic;
 }
 
-.toggle-preview-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
 .data-preview-table-container {
   overflow-x: auto;
   max-height: 400px;

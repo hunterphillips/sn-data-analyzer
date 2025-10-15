@@ -191,19 +191,10 @@ export function DataPreview({
         </div>
         <button
           onClick={onToggle}
-          className="btn btn--subtle toggle-preview-btn"
+          className="btn btn--icon chart-collapse-btn"
+          aria-label={isExpanded ? 'Hide preview' : 'Show preview'}
         >
-          {isExpanded ? (
-            <>
-              <ChevronUp size={16} />
-              Hide Preview
-            </>
-          ) : (
-            <>
-              <ChevronDown size={16} />
-              Show Preview
-            </>
-          )}
+          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
         </button>
       </div>
 
