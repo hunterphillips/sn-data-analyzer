@@ -26,6 +26,7 @@ function App() {
   } | null>(null);
   const [isQueryLoading, setIsQueryLoading] = useState(false);
   const [isDataPreviewExpanded, setIsDataPreviewExpanded] = useState(true);
+  const [isQueryBuilderExpanded, setIsQueryBuilderExpanded] = useState(true);
   const [reportQuestion, setReportQuestion] = useState('');
 
   // Query translation state
@@ -129,18 +130,17 @@ function App() {
 
     try {
       const records = await executeTableQuery(config);
-      setQueryResults({
+      const newQueryResults = {
         data: records,
         tableName: config.table,
-      });
+      };
+      setQueryResults(newQueryResults);
 
       // Auto-submit report question if it exists
       if (reportQuestion.trim()) {
-        // Wait a bit for queryResults state to update
-        setTimeout(() => {
-          handleAnalyzeQueryResults(reportQuestion);
-          setReportQuestion(''); // Clear the question after submitting
-        }, 100);
+        // Pass data directly to avoid state timing issues
+        handleAnalyzeQueryResults(reportQuestion, newQueryResults);
+        setReportQuestion(''); // Clear the question after submitting
       }
     } catch (error) {
       console.error('Query execution error:', error);
@@ -193,10 +193,18 @@ function App() {
     setIsDataPreviewExpanded((prev) => !prev);
   };
 
-  const handleAnalyzeQueryResults = async (question?: string) => {
-    const questionText = question || input;
+  const handleToggleQueryBuilder = () => {
+    setIsQueryBuilderExpanded((prev) => !prev);
+  };
 
-    if (!queryResults || !questionText.trim()) {
+  const handleAnalyzeQueryResults = async (
+    question?: string,
+    queryData?: { data: Record<string, any>[]; tableName: string }
+  ) => {
+    const questionText = question || input;
+    const dataToAnalyze = queryData || queryResults;
+
+    if (!dataToAnalyze || !questionText.trim()) {
       if (!question) {
         alert('Please enter a question about the data');
       }
@@ -217,8 +225,8 @@ function App() {
 
     try {
       const queryDataUpload = convertQueryResultsToFileUpload(
-        queryResults.data,
-        queryResults.tableName
+        dataToAnalyze.data,
+        dataToAnalyze.tableName
       );
 
       const result = await analyzeDataWithClaude(
@@ -346,6 +354,8 @@ function App() {
         onUseDefaultClarification={handleUseDefaultClarification}
         reportQuestion={reportQuestion}
         onReportQuestionChange={setReportQuestion}
+        isQueryBuilderExpanded={isQueryBuilderExpanded}
+        onToggleQueryBuilder={handleToggleQueryBuilder}
       />
       <VisualizationPanel
         dataSource={dataSource}

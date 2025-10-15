@@ -1,5 +1,13 @@
 import React from 'react';
-import { Send, Paperclip, ChartLine, Database, Upload } from 'lucide-react';
+import {
+  Send,
+  Paperclip,
+  ChartLine,
+  Database,
+  Upload,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import type { DataSource, QueryConfig } from '../types/servicenow';
 import type { FileUpload } from '../services/serviceNowApi';
 import {
@@ -53,6 +61,8 @@ interface ChatPanelProps {
   onUseDefaultClarification: () => void;
   reportQuestion: string;
   onReportQuestionChange: (question: string) => void;
+  isQueryBuilderExpanded: boolean;
+  onToggleQueryBuilder: () => void;
 }
 
 export function ChatPanel({
@@ -85,6 +95,8 @@ export function ChatPanel({
   onUseDefaultClarification,
   reportQuestion,
   onReportQuestionChange,
+  isQueryBuilderExpanded,
+  onToggleQueryBuilder,
 }: ChatPanelProps) {
   return (
     <div className="chat-panel">
@@ -114,51 +126,106 @@ export function ChatPanel({
       </div>
 
       {dataSource === 'query' ? (
-        /* Query Mode - Show Query Builder + Chat Input */
+        /* Query Mode - Show Collapsible Query Builder + Messages + Chat Input */
         <>
+          {/* Collapsible Query Builder Section */}
           <div className="query-builder-section">
-            <ServiceNowQueryBuilder
-              onExecuteQuery={onExecuteQuery}
-              onNaturalLanguageQuery={onNaturalLanguageQuery}
-              isLoading={isQueryLoading || isTranslating}
-              mode={queryMode}
-              onModeChange={onModeChange}
-              translationResult={translationResult}
-              reportQuestion={reportQuestion}
-              onReportQuestionChange={onReportQuestionChange}
-            />
+            <div className="query-builder-header">
+              <h3>Define your data</h3>
+              {/* toggle-query-builder-btn */}
+              <button
+                onClick={onToggleQueryBuilder}
+                className="chart-collapse-btn"
+              >
+                {isQueryBuilderExpanded ? (
+                  <>
+                    <ChevronUp size={16} />
+                    {/* Hide */}
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown size={16} />
+                    {/* Show */}
+                  </>
+                )}
+              </button>
+            </div>
 
-            {/* Show translation preview if in simple mode and translation succeeded */}
-            {queryMode === 'simple' && translationResult && (
-              <QueryTranslationPreview
-                translation={translationResult}
-                onConfirm={onConfirmTranslation}
-                onEdit={onEditTranslation}
-                isLoading={isQueryLoading}
-              />
-            )}
+            {isQueryBuilderExpanded && (
+              <div className="query-builder-content">
+                <ServiceNowQueryBuilder
+                  onExecuteQuery={onExecuteQuery}
+                  onNaturalLanguageQuery={onNaturalLanguageQuery}
+                  isLoading={isQueryLoading || isTranslating}
+                  mode={queryMode}
+                  onModeChange={onModeChange}
+                  translationResult={translationResult}
+                  reportQuestion={reportQuestion}
+                  onReportQuestionChange={onReportQuestionChange}
+                />
 
-            {/* Show clarification request if translation needs more info */}
-            {queryMode === 'simple' && clarificationResult && (
-              <QueryClarificationRequest
-                clarification={clarificationResult}
-                onRefine={onRefineClarification}
-                onUseDefault={
-                  clarificationResult.suggestion
-                    ? onUseDefaultClarification
-                    : undefined
-                }
-              />
-            )}
+                {/* Show translation preview if in simple mode and translation succeeded */}
+                {queryMode === 'simple' && translationResult && (
+                  <QueryTranslationPreview
+                    translation={translationResult}
+                    onConfirm={onConfirmTranslation}
+                    onEdit={onEditTranslation}
+                    isLoading={isQueryLoading}
+                  />
+                )}
 
-            {/* Show translation error if translation failed */}
-            {queryMode === 'simple' && translationError && (
-              <QueryTranslationError
-                error={translationError}
-                onRetry={onRetryTranslation}
-                onSwitchToAdvanced={() => onModeChange('advanced')}
-              />
+                {/* Show clarification request if translation needs more info */}
+                {queryMode === 'simple' && clarificationResult && (
+                  <QueryClarificationRequest
+                    clarification={clarificationResult}
+                    onRefine={onRefineClarification}
+                    onUseDefault={
+                      clarificationResult.suggestion
+                        ? onUseDefaultClarification
+                        : undefined
+                    }
+                  />
+                )}
+
+                {/* Show translation error if translation failed */}
+                {queryMode === 'simple' && translationError && (
+                  <QueryTranslationError
+                    error={translationError}
+                    onRetry={onRetryTranslation}
+                    onSwitchToAdvanced={() => onModeChange('advanced')}
+                  />
+                )}
+              </div>
             )}
+          </div>
+
+          {/* Messages Section */}
+          <div className="messages">
+            {messages.length === 0 ? (
+              <div className="welcome">
+                <p>
+                  Define your data above and ask questions to generate insights
+                  and visualizations.
+                </p>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <div key={message.id} className={`message ${message.role}`}>
+                  {message.hasToolUse && message.role === 'assistant' && (
+                    <div className="chart-badge">
+                      <ChartLine size={14} /> Generated Chart
+                    </div>
+                  )}
+                  <div className="message-content">{message.content}</div>
+                </div>
+              ))
+            )}
+            {isLoading && (
+              <div className="message assistant">
+                <div className="message-content loading">Thinking...</div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Chat Input for Query Mode */}

@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, AlertCircle } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -21,6 +22,7 @@ import {
   Legend,
 } from 'recharts';
 import type { ChartData } from '../types/chart';
+import { validateChartData, hasFieldMismatchError } from '../utils/chartValidation';
 
 // Color palette for charts
 const COLORS = [
@@ -46,16 +48,66 @@ const ChartCard: React.FC<ChartCardProps> = ({
   description,
   children,
   footer,
-}) => (
-  <div className="chart-card">
-    <div className="chart-header">
-      <h3 className="chart-title">{title}</h3>
-      <p className="chart-description">{description}</p>
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  return (
+    <div className="chart-card">
+      <div className="chart-header">
+        <div className="chart-header-content">
+          <h3 className="chart-title">{title}</h3>
+          <p className="chart-description">{description}</p>
+        </div>
+        <button
+          className="chart-collapse-btn"
+          onClick={() => setIsExpanded(!isExpanded)}
+          aria-label={isExpanded ? 'Collapse chart' : 'Expand chart'}
+        >
+          {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </button>
+      </div>
+      {isExpanded && <div className="chart-content">{children}</div>}
+      {isExpanded && footer && <div className="chart-footer">{footer}</div>}
     </div>
-    <div className="chart-content">{children}</div>
-    {footer && <div className="chart-footer">{footer}</div>}
-  </div>
-);
+  );
+};
+
+interface ChartErrorProps {
+  errors: string[];
+  chartData?: ChartData;
+}
+
+const ChartError: React.FC<ChartErrorProps> = ({ errors, chartData }) => {
+  const [showDetails, setShowDetails] = useState(false);
+
+  return (
+    <div className="chart-error">
+      <div className="chart-error-header">
+        <AlertCircle size={24} className="chart-error-icon" />
+        <h4>Unable to render chart</h4>
+      </div>
+      <p className="chart-error-message">
+        The chart data has validation errors. This usually means the AI generated
+        mismatched field names.
+      </p>
+      <ul className="chart-error-list">
+        {errors.map((err, i) => (
+          <li key={i}>{err}</li>
+        ))}
+      </ul>
+      {chartData && (
+        <details className="chart-error-details">
+          <summary onClick={() => setShowDetails(!showDetails)}>
+            Technical details {showDetails ? '▼' : '▶'}
+          </summary>
+          <pre className="chart-error-code">
+            {JSON.stringify(chartData, null, 2)}
+          </pre>
+        </details>
+      )}
+    </div>
+  );
+};
 
 function BarChartComponent({ data }: { data: ChartData }) {
   // Find the numeric data key from the first data item
@@ -481,6 +533,32 @@ function ComposedChartComponent({ data }: { data: ChartData }) {
 }
 
 export function ChartRenderer({ data }: { data: ChartData }) {
+  // Validate chart data before rendering
+  const validation = validateChartData(data);
+
+  // Log all validation issues
+  if (validation.errors.length > 0) {
+    console.error('❌ Chart validation errors:', validation.errors);
+
+    // Log if this is a field mismatch (indicates prompt engineering issue)
+    if (hasFieldMismatchError(validation)) {
+      console.error(
+        '⚠️  Field mismatch detected - this may indicate a prompt engineering issue. ' +
+        'The AI generated chartConfig keys that do not match the data fields.'
+      );
+    }
+  }
+
+  if (validation.warnings.length > 0) {
+    console.warn('⚠️  Chart validation warnings:', validation.warnings);
+  }
+
+  // Show error UI if validation failed
+  if (!validation.valid) {
+    return <ChartError errors={validation.errors} chartData={data} />;
+  }
+
+  // Render chart based on type
   try {
     switch (data.chartType) {
       case 'bar':
@@ -507,17 +585,21 @@ export function ChartRenderer({ data }: { data: ChartData }) {
         return <ComposedChartComponent data={data} />;
       default:
         return (
-          <div className="chart-error">
-            Unknown chart type: {(data as any).chartType}
-          </div>
+          <ChartError
+            errors={[`Unknown chart type: ${(data as any).chartType}`]}
+            chartData={data}
+          />
         );
     }
   } catch (error) {
     console.error('Chart rendering error:', error);
     return (
-      <div className="chart-error">
-        Error rendering chart: {error instanceof Error ? error.message : 'Unknown error'}
-      </div>
+      <ChartError
+        errors={[
+          `Error rendering chart: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        ]}
+        chartData={data}
+      />
     );
   }
 }

@@ -77,31 +77,18 @@ export function ServiceNowQueryBuilder({
 
   return (
     <div className="query-builder">
-      <div className="query-builder-header">
-        <div className="header-top">
-          <div>
-            <h3>Define your data</h3>
-            {/* <p className="query-builder-description">
-              {mode === 'simple'
-                ? 'Describe the data you want to see'
-                : 'Build a custom query with filters and field selection'}
-            </p> */}
-          </div>
-
-          {/* Advanced Mode Toggle */}
-          <label className="advanced-toggle">
-            <input
-              type="checkbox"
-              checked={mode === 'advanced'}
-              onChange={(e) =>
-                onModeChange(e.target.checked ? 'advanced' : 'simple')
-              }
-              disabled={isLoading}
-            />
-            <span>Advanced</span>
-          </label>
-        </div>
-      </div>
+      {/* Advanced Mode Toggle */}
+      <label className="advanced-toggle">
+        <input
+          type="checkbox"
+          checked={mode === 'advanced'}
+          onChange={(e) =>
+            onModeChange(e.target.checked ? 'advanced' : 'simple')
+          }
+          disabled={isLoading}
+        />
+        <span>Advanced</span>
+      </label>
 
       {mode === 'simple' ? (
         /* Simple Mode Form */
@@ -145,7 +132,7 @@ export function ServiceNowQueryBuilder({
             className="query-execute-btn"
             disabled={isLoading || !naturalLanguageQuery.trim()}
           >
-            {isLoading ? 'Loading...' : 'Preview Data'}
+            {isLoading ? 'Loading...' : 'Preview'}
           </button>
         </form>
       ) : (
@@ -227,7 +214,7 @@ export function ServiceNowQueryBuilder({
             className="query-execute-btn"
             disabled={isLoading || !config.table}
           >
-            {isLoading ? 'Loading Data...' : 'Preview Data'}
+            {isLoading ? 'Loading Data...' : 'Preview'}
           </button>
         </form>
       )}

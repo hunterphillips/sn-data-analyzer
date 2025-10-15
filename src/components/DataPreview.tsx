@@ -8,6 +8,150 @@ interface DataPreviewProps {
   onToggle: () => void;
 }
 
+// Preview field configurations for common ServiceNow tables
+const PREVIEW_FIELDS: Record<string, string[]> = {
+  // Incident table
+  incident: [
+    'number',
+    'short_description',
+    'state',
+    'incident_state',
+    'priority',
+    'severity',
+    'category',
+    'assignment_group',
+    'assigned_to',
+    'caller_id',
+    'resolved_at',
+    'sys_created_on',
+  ],
+
+  // Change Request table
+  change_request: [
+    'number',
+    'short_description',
+    'state',
+    'type',
+    'risk',
+    'priority',
+    'category',
+    'assignment_group',
+    'assigned_to',
+    'requested_by',
+    'start_date',
+    'end_date',
+    'sys_created_on',
+  ],
+
+  // Problem table
+  problem: [
+    'number',
+    'short_description',
+    'state',
+    'priority',
+    'impact',
+    'category',
+    'assignment_group',
+    'assigned_to',
+    'opened_at',
+    'closed_at',
+    'sys_created_on',
+  ],
+
+  // Task table
+  task: [
+    'number',
+    'short_description',
+    'state',
+    'priority',
+    'active',
+    'assignment_group',
+    'assigned_to',
+    'opened_at',
+    'closed_at',
+    'sys_created_on',
+  ],
+
+  // CMDB CI tables (Configuration Items)
+  cmdb_ci: [
+    'name',
+    'sys_class_name',
+    'operational_status',
+    'install_status',
+    'assignment_group',
+    'assigned_to',
+    'location',
+    'serial_number',
+    'asset_tag',
+    'sys_created_on',
+  ],
+  cmdb_ci_server: [
+    'name',
+    'sys_class_name',
+    'operational_status',
+    'install_status',
+    'ip_address',
+    'host_name',
+    'os',
+    'assignment_group',
+    'assigned_to',
+    'location',
+  ],
+  cmdb_ci_computer: [
+    'name',
+    'sys_class_name',
+    'operational_status',
+    'install_status',
+    'ip_address',
+    'host_name',
+    'os',
+    'assignment_group',
+    'assigned_to',
+    'location',
+  ],
+};
+
+// Common fields to always include as fallback
+const DEFAULT_PREVIEW_FIELDS = [
+  'number',
+  'name',
+  'short_description',
+  'state',
+  'priority',
+  'assignment_group',
+  'assigned_to',
+  'category',
+  'sys_created_on',
+  'sys_updated_on',
+];
+
+/**
+ * Get the preview fields for a given table, filtering to only those that exist in the data
+ */
+function getPreviewFields(
+  tableName: string,
+  availableFields: string[]
+): string[] {
+  // Get configured preview fields for this table type
+  let previewFields = PREVIEW_FIELDS[tableName] || DEFAULT_PREVIEW_FIELDS;
+
+  // Filter to only fields that actually exist in the data
+  const fieldsInData = previewFields.filter((field) =>
+    availableFields.includes(field)
+  );
+
+  // If we have fewer than 5 fields, add more from available fields
+  if (fieldsInData.length < 5) {
+    const additionalFields = availableFields
+      .filter((field) => !fieldsInData.includes(field))
+      .slice(0, 10 - fieldsInData.length);
+
+    return [...fieldsInData, ...additionalFields];
+  }
+
+  return fieldsInData;
+}
+
 export function DataPreview({
   data,
   tableName,
@@ -17,15 +161,18 @@ export function DataPreview({
   if (!data || data.length === 0) {
     return (
       <div className="data-preview-empty">
-        <p>No data to preview. Click "Preview Data" above to pull records.</p>
+        <p>No data to preview. Click "Preview" above to pull records.</p>
       </div>
     );
   }
 
   // Get all unique field names from the data
-  const fields = Array.from(
+  const allFields = Array.from(
     new Set(data.flatMap((record) => Object.keys(record)))
   );
+
+  // Get filtered preview fields based on table type
+  const fields = getPreviewFields(tableName, allFields);
 
   // Limit preview to first 50 records for performance
   const previewData = data.slice(0, 50);
