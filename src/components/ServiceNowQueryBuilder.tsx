@@ -113,7 +113,7 @@ export function ServiceNowQueryBuilder({
 
           <div className="form-row">
             <label htmlFor="report-question">
-              What kind of report do you want to run?
+              What kind of report do you want to see?
               <span className="label-hint">(optional)</span>
             </label>
             <textarea
@@ -195,7 +195,7 @@ export function ServiceNowQueryBuilder({
 
           <div className="form-row">
             <label htmlFor="report-question-advanced">
-              What kind of report do you want to run?
+              What kind of report do you want to see?
               <span className="label-hint">(optional)</span>
             </label>
             <textarea

@@ -12,6 +12,25 @@ ClaudeConfig.prototype = {
   },
 
   /**
+   * Get current date in human-readable format for Claude context
+   * @returns {String} Formatted current date
+   */
+  _getCurrentDate: function () {
+    var gdt = new GlideDateTime();
+    var dateStr = gdt.getDisplayValue(); // Returns: "2025-10-15 12:34:56"
+
+    // Extract just the date part (YYYY-MM-DD)
+    var datePart = dateStr.split(' ')[0];
+
+    // Get day of week
+    var dayOfWeek = gdt.getDayOfWeekLocalTime(); // Returns: 1-7 (Sunday=1)
+    var dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    var dayName = dayNames[dayOfWeek - 1];
+
+    return datePart + ' (' + dayName + ')';
+  },
+
+  /**
    * Get the system prompt for ServiceNow data analysis
    * @returns {Array} System prompt array with cache control
    */
@@ -20,6 +39,9 @@ ClaudeConfig.prototype = {
       {
         type: 'text',
         text:
+          '## Current Context\n\n' +
+          "Today's date: " + this._getCurrentDate() + '\n' +
+          'Use this date for any time-based analysis, chart generation, trends, or date calculations.\n\n' +
           'You are a ServiceNow data visualization expert. Your role is to analyze ServiceNow data exports and create clear, meaningful visualizations using generate_graph_data tool.\n\n' +
           '## Chart Types Available\n\n' +
           '1. LINE CHARTS ("line") - Time series data showing trends\n' +
@@ -152,6 +174,9 @@ ClaudeConfig.prototype = {
    */
   getQueryTranslationPrompt: function (schema) {
     return (
+      '## Current Context\n\n' +
+      "Today's date: " + this._getCurrentDate() + '\n' +
+      'Use this when calculating relative dates like "last 7 days", "past month", or any time-based queries.\n\n' +
       'You are a ServiceNow query translation assistant. Your job is to translate natural language requests into structured ServiceNow Table API query parameters.\n\n' +
       '## Available Tables and Fields\n\n' +
       schema +
