@@ -88,8 +88,9 @@
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background var(--transition-base), border-color var(--transition-base),
-    color var(--transition-base), box-shadow var(--transition-base);
+  transition: background var(--transition-base),
+    border-color var(--transition-base), color var(--transition-base),
+    box-shadow var(--transition-base);
   background: transparent;
   color: var(--text-secondary);
 }
@@ -579,6 +580,11 @@
   height: 100%;
 }
 
+.query-builder-header {
+  border-bottom: none;
+  padding-left: var(--spacing-lg);
+}
+
 .query-builder-section {
   border-bottom: 1px solid var(--border-subtle);
   background: var(--surface-muted);
@@ -591,6 +597,7 @@
   max-height: 60vh;
   overflow-y: auto;
   padding: var(--spacing-lg);
+  padding-top: var(--spacing-sm);
   background: var(--surface);
 }
 

@@ -101,7 +101,7 @@ export function ChatPanel({
   return (
     <div className="chat-panel surface-panel">
       <div className="chat-header">
-        <h2>ServiceNow Data Analyst</h2>
+        {/* <h2>Data Explorer</h2> */}
         {/* <p className="powered-by">Powered by Claude</p> */}
 
         {/* Data Source Toggle */}
@@ -135,7 +135,7 @@ export function ChatPanel({
           {/* Collapsible Query Builder Section */}
           <div className="query-builder-section">
             <div className="query-builder-header">
-              <h3>Define your data</h3>
+              <h3>Search Settings</h3>
               {/* toggle-query-builder-btn */}
               <button
                 onClick={onToggleQueryBuilder}
