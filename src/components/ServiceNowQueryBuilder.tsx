@@ -101,7 +101,7 @@ export function ServiceNowQueryBuilder({
               id="nl-query"
               value={naturalLanguageQuery}
               onChange={(e) => setNaturalLanguageQuery(e.target.value)}
-              placeholder="Show me critical priority incidents that have been opened in the last month"
+              placeholder="Incidents opened in the last 6 months"
               disabled={isLoading}
               rows={4}
               className="nl-query-input"
@@ -120,7 +120,7 @@ export function ServiceNowQueryBuilder({
               id="report-question"
               value={reportQuestion}
               onChange={(e) => onReportQuestionChange(e.target.value)}
-              placeholder="Show me a trend line of incidents by month"
+              placeholder="Monthly trend line of critical incidents"
               disabled={isLoading}
               rows={3}
               className="nl-query-input"
